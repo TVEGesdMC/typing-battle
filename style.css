@@ -1,0 +1,574 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    overflow-x: hidden;
+}
+
+body {
+    text-align: center;
+    padding: 20px;
+    animation: backgroundShift 10s ease-in-out infinite alternate;
+}
+
+@keyframes backgroundShift {
+    0% { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    100% { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+}
+
+#game-container {
+    width: 90%;
+    max-width: 800px;
+    margin: 0 auto;
+    border: 3px solid #fff;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+#game-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: rotate 20s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+    border-radius: 15px;
+    color: white;
+    position: relative;
+    z-index: 2;
+}
+
+.user-info h2 {
+    font-size: 1.5em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.stats {
+    font-size: 0.9em;
+    margin-top: 10px;
+    opacity: 0.9;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    margin-left: 15px;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+.nav-links a:hover {
+    background: rgba(255,255,255,0.4);
+    transform: translateY(-2px);
+}
+
+h1 {
+    font-size: 3em;
+    margin-bottom: 20px;
+    color: #333;
+    text-shadow: 3px 3px 6px rgba(0,0,0,0.2);
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: textGlow 2s ease-in-out infinite alternate;
+    position: relative;
+    z-index: 2;
+}
+
+@keyframes textGlow {
+    0% { filter: drop-shadow(0 0 5px rgba(255,107,107,0.5)); }
+    100% { filter: drop-shadow(0 0 20px rgba(78,205,196,0.8)); }
+}
+
+#level-info {
+    font-size: 1.3em;
+    margin-bottom: 20px;
+    padding: 10px 20px;
+    background: linear-gradient(45deg, #ffeaa7, #fab1a0);
+    border-radius: 25px;
+    display: inline-block;
+    color: #2d3436;
+    font-weight: bold;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 2;
+}
+
+#monster-area, #player-area {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: 30px;
+    position: relative;
+    z-index: 2;
+}
+
+.character {
+    padding: 25px;
+    border: 3px solid #ddd;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #f0f0f0, #cacaca);
+    box-shadow: 
+        0 10px 20px rgba(0,0,0,0.2),
+        inset 0 2px 4px rgba(255,255,255,0.8);
+    min-width: 200px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.character:hover {
+    transform: translateY(-5px);
+    box-shadow: 
+        0 15px 30px rgba(0,0,0,0.3),
+        inset 0 2px 4px rgba(255,255,255,0.8);
+}
+
+.character h2 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.4em;
+}
+
+.character p {
+    font-size: 1.1em;
+    color: #555;
+    font-weight: bold;
+}
+
+/* Monster and Boss Icons */
+.character::before {
+    content: '';
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #e74c3c, #c0392b);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+#monster-area .character::before {
+    content: '👹';
+    animation: monsterPulse 2s ease-in-out infinite;
+}
+
+#monster-area .character.boss::before {
+    content: '💀';
+    background: linear-gradient(45deg, #8e44ad, #2c3e50);
+    width: 80px;
+    height: 80px;
+    top: -40px;
+    font-size: 40px;
+    animation: bossPulse 1.5s ease-in-out infinite;
+    box-shadow: 
+        0 0 20px rgba(142, 68, 173, 0.6),
+        0 5px 15px rgba(0,0,0,0.3);
+}
+
+#player-area .character::before {
+    content: '🛡️';
+    background: linear-gradient(45deg, #3498db, #2980b9);
+    animation: playerGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes monsterPulse {
+    0%, 100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.1); }
+}
+
+@keyframes bossPulse {
+    0%, 100% { 
+        transform: translateX(-50%) scale(1);
+        box-shadow: 
+            0 0 20px rgba(142, 68, 173, 0.6),
+            0 5px 15px rgba(0,0,0,0.3);
+    }
+    50% { 
+        transform: translateX(-50%) scale(1.15);
+        box-shadow: 
+            0 0 30px rgba(142, 68, 173, 0.9),
+            0 8px 25px rgba(0,0,0,0.4);
+    }
+}
+
+@keyframes playerGlow {
+    0% { 
+        box-shadow: 
+            0 0 15px rgba(52, 152, 219, 0.5),
+            0 5px 15px rgba(0,0,0,0.3);
+    }
+    100% { 
+        box-shadow: 
+            0 0 25px rgba(52, 152, 219, 0.8),
+            0 5px 15px rgba(0,0,0,0.3);
+    }
+}
+
+.boss {
+    color: #8e44ad !important;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+#monster-area .character.boss {
+    border-color: #8e44ad;
+    background: linear-gradient(145deg, #f8f3ff, #e8d5ff);
+    box-shadow: 
+        0 10px 20px rgba(142, 68, 173, 0.3),
+        inset 0 2px 4px rgba(255,255,255,0.8);
+}
+
+#current-word {
+    font-size: 2.5em;
+    margin: 30px 0;
+    color: #2c3e50;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    padding: 20px;
+    background: linear-gradient(45deg, #74b9ff, #0984e3);
+    border-radius: 15px;
+    color: white;
+    display: inline-block;
+    min-width: 200px;
+    position: relative;
+    z-index: 2;
+    animation: wordPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes wordPulse {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.05); }
+}
+
+#typing-input {
+    width: 80%;
+    max-width: 400px;
+    padding: 15px 20px;
+    font-size: 1.3em;
+    border: 3px solid #ddd;
+    border-radius: 25px;
+    margin-bottom: 20px;
+    outline: none;
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    box-shadow: 
+        inset 0 2px 4px rgba(0,0,0,0.1),
+        0 5px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+#typing-input:focus {
+    border-color: #74b9ff;
+    box-shadow: 
+        inset 0 2px 4px rgba(0,0,0,0.1),
+        0 0 20px rgba(116, 185, 255, 0.4);
+    transform: scale(1.02);
+}
+
+.message {
+    margin: 20px 0;
+    font-weight: bold;
+    font-size: 1.1em;
+    padding: 15px;
+    border-radius: 10px;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.correct {
+    color: #00b894;
+    background: rgba(0, 184, 148, 0.1);
+    border: 2px solid #00b894;
+    animation: correctFlash 0.5s ease-in-out;
+}
+
+@keyframes correctFlash {
+    0%, 100% { background: rgba(0, 184, 148, 0.1); }
+    50% { background: rgba(0, 184, 148, 0.3); }
+}
+
+.incorrect {
+    color: #e17055;
+    background: rgba(225, 112, 85, 0.1);
+    border: 2px solid #e17055;
+    animation: incorrectShake 0.5s ease-in-out;
+}
+
+@keyframes incorrectShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.game-over {
+    color: #d63031;
+    background: rgba(214, 48, 49, 0.1);
+    border: 2px solid #d63031;
+    font-size: 1.2em;
+    animation: gameOverPulse 1s ease-in-out infinite;
+}
+
+@keyframes gameOverPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.btn {
+    background: linear-gradient(45deg, #74b9ff, #0984e3);
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1em;
+    text-decoration: none;
+    display: inline-block;
+    margin: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn-secondary {
+    background: linear-gradient(45deg, #636e72, #2d3436);
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(45deg, #74b9ff, #0984e3);
+}
+
+/* Leaderboard specific styles */
+.leaderboard-container {
+    width: 90%;
+    max-width: 700px;
+    margin: 0 auto;
+    border: 3px solid #fff;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.leaderboard-table th {
+    background: linear-gradient(45deg, #74b9ff, #0984e3);
+    color: white;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.leaderboard-table tr:hover {
+    background: rgba(116, 185, 255, 0.1);
+    transform: scale(1.01);
+    transition: all 0.3s ease;
+}
+
+.rank {
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.rank-1 { 
+    color: #f39c12;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.rank-2 { 
+    color: #95a5a6;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.rank-3 { 
+    color: #d35400;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.current-user {
+    background: linear-gradient(45deg, rgba(116, 185, 255, 0.2), rgba(9, 132, 227, 0.2));
+    font-weight: bold;
+}
+
+.no-data {
+    color: #636e72;
+    font-style: italic;
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(99, 110, 114, 0.1);
+    border-radius: 10px;
+}
+
+/* Signup page specific styles */
+.auth-container {
+    width: 90%;
+    max-width: 500px;
+    margin: 50px auto;
+    border: 3px solid #fff;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+}
+
+.auth-form {
+    margin-bottom: 30px;
+}
+
+.auth-form h2 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 1em;
+    transition: all 0.3s ease;
+}
+
+.auth-form input:focus {
+    border-color: #74b9ff;
+    outline: none;
+    box-shadow: 0 0 10px rgba(116, 185, 255, 0.3);
+}
+
+.toggle-link {
+    color: #74b9ff;
+    cursor: pointer;
+    text-decoration: underline;
+    margin-top: 15px;
+    display: inline-block;
+    transition: color 0.3s ease;
+}
+
+.toggle-link:hover {
+    color: #0984e3;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    h1 {
+        font-size: 2em;
+    }
+    
+    #current-word {
+        font-size: 2em;
+    }
+    
+    #typing-input {
+        width: 95%;
+    }
+    
+    .character {
+        min-width: 150px;
+        padding: 20px;
+    }
+    
+    .character::before {
+        width: 50px;
+        height: 50px;
+        font-size: 25px;
+        top: -25px;
+    }
+    
+    #monster-area .character.boss::before {
+        width: 60px;
+        height: 60px;
+        top: -30px;
+        font-size: 30px;
+    }
+}
