@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -72,10 +73,63 @@
             color: purple;
             font-weight: bold;
         }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .user-info {
+            text-align: left;
+        }
+        .nav-links {
+            text-align: right;
+        }
+        .nav-links a {
+            color: #007bff;
+            text-decoration: none;
+            margin-left: 15px;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .stats {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
+        <div class="header">
+            <div class="user-info">
+                <h2>Welcome, <span id="username"></span>!</h2>
+                <div class="stats">
+                    Best Level: <span id="best-level">0</span> | 
+                    Games Played: <span id="games-played">0</span>
+                </div>
+            </div>
+            <div class="nav-links">
+                <a href="leaderboard.html">🏆 Leaderboard</a>
+                <a href="#" onclick="logout()" class="btn">Logout</a>
+            </div>
+        </div>
+
         <h1>Typing Battle!</h1>
         <p id="level-info">Level: <span id="current-level">1</span></p>
         <div id="monster-area">
@@ -94,6 +148,10 @@
         <p id="current-word"></p>
         <input type="text" id="typing-input" placeholder="Type the word...">
         <p id="message" class="message"></p>
+        
+        <div style="margin-top: 20px;">
+            <button class="btn" onclick="startGame()">New Game</button>
+        </div>
     </div>
 
     <script>
@@ -105,6 +163,7 @@
         let playerHealth = 100;
         let currentLevel = 1;
         let isBossFight = false;
+        let currentUser = "";
 
         const monsterHealthSpan = document.getElementById("monster-health");
         const playerHealthSpan = document.getElementById("player-health");
@@ -114,12 +173,48 @@
         const currentLevelDisplay = document.getElementById("current-level");
         const monsterNameDisplay = document.getElementById("monster-name");
 
+        function checkAuth() {
+            currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) {
+                window.location.href = 'signup.html';
+                return false;
+            }
+            
+            document.getElementById('username').textContent = currentUser;
+            loadUserStats();
+            return true;
+        }
+
+        function loadUserStats() {
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            const userData = users[currentUser] || { maxLevel: 0, gamesPlayed: 0 };
+            
+            document.getElementById('best-level').textContent = userData.maxLevel;
+            document.getElementById('games-played').textContent = userData.gamesPlayed;
+        }
+
+        function updateUserStats(level) {
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            if (users[currentUser]) {
+                users[currentUser].maxLevel = Math.max(users[currentUser].maxLevel || 0, level);
+                users[currentUser].gamesPlayed = (users[currentUser].gamesPlayed || 0) + 1;
+                localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+                loadUserStats();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'signup.html';
+        }
+
         function startGame() {
-            playerHealth = 100; // Reset player health
+            playerHealth = 100;
             currentLevel = 1;
             isBossFight = false;
             typingInput.disabled = false;
             monsterNameDisplay.classList.remove("boss");
+            document.querySelector('#monster-area .character').classList.remove("boss");
             startLevel();
             updateHealthDisplays();
             typingInput.value = "";
@@ -129,17 +224,20 @@
 
         function startLevel() {
             currentLevelDisplay.textContent = currentLevel;
+            const monsterDiv = document.querySelector('#monster-area .character');
 
             if (currentLevel % 5 === 0) {
                 isBossFight = true;
                 monsterHealth = 250;
                 monsterNameDisplay.textContent = "BOSS MONSTER";
                 monsterNameDisplay.classList.add("boss");
+                monsterDiv.classList.add("boss");
             } else {
                 isBossFight = false;
-                monsterHealth = 100; // Monster health increases with levels
+                monsterHealth = 100;
                 monsterNameDisplay.textContent = "Monster";
                 monsterNameDisplay.classList.remove("boss");
+                monsterDiv.classList.remove("boss");
             }
             updateHealthDisplays();
             newWord();
@@ -158,11 +256,11 @@
         }
 
         function attack(target) {
-            let damage = Math.floor(Math.random() * 10) + 5; // Random damage between 5 and 14
+            let damage = Math.floor(Math.random() * 10) + 5;
 
             if (target === "monster") {
                 if (isBossFight) {
-                    damage = Math.floor(Math.random() * 20) + 15; // Player deals more damage to boss
+                    damage = Math.floor(Math.random() * 20) + 15;
                 }
                 monsterHealth -= damage;
                 if (monsterHealth <= 0) {
@@ -181,10 +279,10 @@
                     messageDisplay.classList.remove("incorrect");
                 }
             } else if (target === "player") {
-                let monsterDamage = Math.floor(Math.random() * 12) + 8; // Monster damage between 8 and 19
+                let monsterDamage = Math.floor(Math.random() * 12) + 8;
 
                 if (isBossFight) {
-                    monsterDamage = Math.floor(Math.random() * 25) + 20; // Boss deals more damage
+                    monsterDamage = Math.floor(Math.random() * 25) + 20;
                 }
 
                 playerHealth -= monsterDamage;
@@ -202,16 +300,17 @@
 
         function levelUp() {
             currentLevel++;
-            setTimeout(() => { // Introduce a small delay before the next level starts
+            setTimeout(() => {
                 startLevel();
-            }, 1500); // 1.5 seconds delay
+            }, 1500);
         }
 
         function endGame(result) {
             currentWordDisplay.textContent = result;
             typingInput.disabled = true;
-            messageDisplay.textContent = "Game Over! Press ctrl+R to restart.";
+            messageDisplay.textContent = "Game Over! Click 'New Game' to play again.";
             messageDisplay.classList.add("game-over");
+            updateUserStats(currentLevel - 1);
         }
 
         typingInput.addEventListener("keyup", (event) => {
@@ -220,7 +319,7 @@
             if (event.key === "Enter") {
                 if (typingInput.value.toLowerCase() === currentWord) {
                     attack("monster");
-                    if (monsterHealth > 0) { // Only get a new word if the monster is not defeated
+                    if (monsterHealth > 0) {
                         newWord();
                     }
                 } else {
@@ -228,14 +327,16 @@
                     messageDisplay.classList.add("incorrect");
                     messageDisplay.classList.remove("correct");
                     attack("player");
-                    // Monster attacks on incorrect word, but we still need a new word for the player to type
                     newWord();
                 }
                 typingInput.value = "";
             }
         });
 
-        startGame();
+        // Initialize the game
+        if (checkAuth()) {
+            startGame();
+        }
     </script>
 </body>
 </html>
