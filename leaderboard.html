@@ -61,7 +61,7 @@
                 else if (rank === 3) rankDisplay = '🥉';
 
                 // Get user title
-                const userTitle = getUserTitleDisplay(user.title || '', user.customTitle || '', user.isPremium || false);
+                const userTitle = getUserTitleDisplay(user.title || '', user.customTitle || '', user.isPremium || false, user.youtuberTitles || []);
 
                 tableHTML += `
                     <tr class="${rowClass}">
@@ -78,7 +78,16 @@
             content.innerHTML = tableHTML;
         }
 
-        function getUserTitleDisplay(title, customTitle, isPremium) {
+        function getUserTitleDisplay(title, customTitle, isPremium, youtuberTitles = []) {
+            // YouTuber titles have highest priority
+            if (youtuberTitles && youtuberTitles.length > 0) {
+                const youtuberTitlesData = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
+                const firstTitle = youtuberTitlesData[youtuberTitles[0]];
+                if (firstTitle) {
+                    return `<span class="youtuber-title">🎬 ${firstTitle.name}</span>`;
+                }
+            }
+            
             if (isPremium && customTitle) {
                 return `<span class="custom-title">✨ ${customTitle}</span>`;
             }
