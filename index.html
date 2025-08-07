@@ -12,14 +12,16 @@
     <div id="game-container">
         <div class="header">
             <div class="user-info">
-                <h2>Welcome, <span id="username"></span>!</h2>
+                <h2><span id="player-title"></span><span id="username"></span>!</h2>
                 <div class="stats">
+                    💎 Gems: <span id="gems-count">0</span> |
                     Best Level: <span id="best-level">0</span> |
                     Games Played: <span id="games-played">0</span>
                 </div>
             </div>
             <div class="nav-links">
                 <a href="leaderboard.html">🏆 Leaderboard</a>
+                <a href="#" onclick="toggleShop()" class="btn">🛒 Shop</a>
                 <a href="#" onclick="logout()" class="btn">Logout</a>
             </div>
         </div>
@@ -49,6 +51,107 @@
         </div>
     </div>
 
+    <!-- Shop Interface -->
+    <div id="shop-overlay" class="shop-overlay" style="display: none;">
+        <div class="shop-container">
+            <div class="shop-header">
+                <h2>⚔️ Warrior's Shop ⚔️</h2>
+                <span class="close-shop" onclick="toggleShop()">&times;</span>
+            </div>
+            
+            <div class="gems-display">
+                💎 Your Gems: <span id="shop-gems">0</span>
+            </div>
+
+            <div class="shop-tabs">
+                <button class="tab-btn active" onclick="showTab('titles')">🏅 Titles</button>
+                <button class="tab-btn" onclick="showTab('perks')">⚡ Perks</button>
+            </div>
+
+            <div id="titles-tab" class="shop-tab active">
+                <h3>🏅 Titles (Permanent)</h3>
+                <div class="shop-items">
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <h4>🗡️ Sword Master</h4>
+                            <p>Show your mastery with blades</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">500 💎</span>
+                            <button onclick="buyItem('title', 'swordmaster', 500)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <h4>🏆 Champion</h4>
+                            <p>For true heroes of the arena</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">1000 💎</span>
+                            <button onclick="buyItem('title', 'champion', 1000)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <h4>👑 Legendary</h4>
+                            <p>Reserved for legends only</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">2500 💎</span>
+                            <button onclick="buyItem('title', 'legendary', 2500)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="perks-tab" class="shop-tab">
+                <h3>⚡ Combat Perks (Permanent)</h3>
+                <div class="shop-items">
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <h4>💪 Double Damage</h4>
+                            <p>Deal 2x damage to monsters</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">800 💎</span>
+                            <button onclick="buyItem('perk', 'doubleDamage', 800)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <h4>❤️ Extra Health</h4>
+                            <p>Start with 150 health instead of 100</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">600 💎</span>
+                            <button onclick="buyItem('perk', 'extraHealth', 600)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <h4>⚡ Fast Typing</h4>
+                            <p>Monsters take longer to attack</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">700 💎</span>
+                            <button onclick="buyItem('perk', 'fastTyping', 700)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <h4>💎 Gem Collector</h4>
+                            <p>Earn 50% more gems per level</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">1200 💎</span>
+                            <button onclick="buyItem('perk', 'gemBonus', 1200)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const words = ["attack", "defend", "magic", "sword", "shield", "spell", "heal", "potion", "strike", "dodge", "ability", "spirit", "valor", "courage", "fury", "enchant", "bless", "curse", "poison", "fire", "ice", "thunder", "earth", "wind", "light", "darkness", "focus", "meditate", "charge", "parry", "slap", "tackle"];
         const bossWords = ["destroyer", "annihilator", "overlord", "tyrant", "colossus", "behemoth", "leviathan", "abomination", "conqueror", "devastator", "ram", "tackle", "shoot", "arrow", "sword", "chargoggagoggmanchauggagoggchaubunagungamaugg", "dragon", "wyvern", "hydra", "golem", "beast", "fiend", "demon", "devil", "angel", "archangel", "archfiend", "archdemon", "Erythrocytapheresis", "Supercalifragilisticexpialidocious"];
@@ -61,6 +164,15 @@
         let currentUser = "";
         let cheatMode = false;
         let cheatInterval = null;
+        let gems = 0;
+        let shopVisible = false;
+        let playerTitle = "";
+        let playerPerks = {
+            doubleDamage: false,
+            extraHealth: false,
+            fastTyping: false,
+            gemBonus: false
+        };
 
         const monsterHealthSpan = document.getElementById("monster-health");
         const playerHealthSpan = document.getElementById("player-health");
@@ -85,10 +197,28 @@
 
         function loadUserStats() {
             const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
-            const userData = users[currentUser] || {maxLevel: 0, gamesPlayed: 0};
+            const userData = users[currentUser] || {maxLevel: 0, gamesPlayed: 0, gems: 0, title: '', perks: {}};
+
+            gems = userData.gems || 0;
+            playerTitle = userData.title || '';
+            playerPerks = userData.perks || {doubleDamage: false, extraHealth: false, fastTyping: false, gemBonus: false};
 
             document.getElementById('best-level').textContent = userData.maxLevel;
             document.getElementById('games-played').textContent = userData.gamesPlayed;
+            document.getElementById('gems-count').textContent = gems;
+            document.getElementById('shop-gems').textContent = gems;
+            
+            // Update title display
+            const titleElement = document.getElementById('player-title');
+            if (playerTitle) {
+                const titleText = getTitleText(playerTitle);
+                titleElement.textContent = titleText + ' ';
+                titleElement.style.color = getTitleColor(playerTitle);
+            } else {
+                titleElement.textContent = 'Welcome, ';
+            }
+            
+            updateShopButtons();
         }
 
         function updateUserStats(level) {
@@ -96,6 +226,20 @@
             if (users[currentUser]) {
                 users[currentUser].maxLevel = Math.max(users[currentUser].maxLevel || 0, level);
                 users[currentUser].gamesPlayed = (users[currentUser].gamesPlayed || 0) + 1;
+                users[currentUser].gems = gems;
+                users[currentUser].title = playerTitle;
+                users[currentUser].perks = playerPerks;
+                localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+                loadUserStats();
+            }
+        }
+
+        function saveUserData() {
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            if (users[currentUser]) {
+                users[currentUser].gems = gems;
+                users[currentUser].title = playerTitle;
+                users[currentUser].perks = playerPerks;
                 localStorage.setItem('typingBattleUsers', JSON.stringify(users));
                 loadUserStats();
             }
@@ -163,7 +307,7 @@
         }
 
         function startGame() {
-            playerHealth = 100;
+            playerHealth = playerPerks.extraHealth ? 150 : 100;
             currentLevel = 1;
             isBossFight = false;
             typingInput.disabled = false;
@@ -221,13 +365,33 @@
                 if (isBossFight) {
                     damage = Math.floor(Math.random() * 20) + 15;
                 }
+                
+                // Apply double damage perk
+                if (playerPerks.doubleDamage) {
+                    damage *= 2;
+                }
+                
                 monsterHealth -= damage;
                 if (monsterHealth <= 0) {
                     monsterHealth = 0;
+                    
+                    // Award gems for defeating monster
+                    let gemsEarned = 100;
                     if (isBossFight) {
-                        messageDisplay.textContent = "You defeated the BOSS!";
+                        gemsEarned = 250; // Bonus for boss
+                    }
+                    if (playerPerks.gemBonus) {
+                        gemsEarned = Math.floor(gemsEarned * 1.5);
+                    }
+                    
+                    gems += gemsEarned;
+                    document.getElementById('gems-count').textContent = gems;
+                    document.getElementById('shop-gems').textContent = gems;
+                    
+                    if (isBossFight) {
+                        messageDisplay.textContent = `You defeated the BOSS! +${gemsEarned} gems!`;
                     } else {
-                        messageDisplay.textContent = `You defeated the monster!`;
+                        messageDisplay.textContent = `You defeated the monster! +${gemsEarned} gems!`;
                     }
                     messageDisplay.classList.add("correct");
                     messageDisplay.classList.remove("incorrect");
@@ -242,6 +406,11 @@
 
                 if (isBossFight) {
                     monsterDamage = Math.floor(Math.random() * 25) + 20;
+                }
+
+                // Fast typing perk reduces monster damage
+                if (playerPerks.fastTyping) {
+                    monsterDamage = Math.floor(monsterDamage * 0.7);
                 }
 
                 playerHealth -= monsterDamage;
@@ -299,6 +468,97 @@
                 typingInput.value = "";
             }
         });
+
+        // Shop Functions
+        function toggleShop() {
+            shopVisible = !shopVisible;
+            document.getElementById('shop-overlay').style.display = shopVisible ? 'flex' : 'none';
+            if (shopVisible) {
+                updateShopButtons();
+            }
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.shop-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName + '-tab').classList.add('active');
+            document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+        }
+
+        function buyItem(type, item, price) {
+            if (gems < price) {
+                alert('Not enough gems! 💎');
+                return;
+            }
+
+            if (type === 'title') {
+                playerTitle = item;
+                gems -= price;
+                alert('Title purchased! ✨');
+            } else if (type === 'perk') {
+                if (playerPerks[item]) {
+                    alert('You already own this perk! ⚡');
+                    return;
+                }
+                playerPerks[item] = true;
+                gems -= price;
+                alert('Perk purchased! Your power grows! 💪');
+            }
+
+            saveUserData();
+            updateShopButtons();
+        }
+
+        function updateShopButtons() {
+            // Update gems display
+            document.getElementById('gems-count').textContent = gems;
+            document.getElementById('shop-gems').textContent = gems;
+
+            // Update buy buttons
+            document.querySelectorAll('.buy-btn').forEach(btn => {
+                const onclick = btn.getAttribute('onclick');
+                const match = onclick.match(/buyItem\('(\w+)', '(\w+)', (\d+)\)/);
+                if (match) {
+                    const [, type, item, price] = match;
+                    
+                    if (type === 'title' && playerTitle === item) {
+                        btn.textContent = 'Owned';
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                    } else if (type === 'perk' && playerPerks[item]) {
+                        btn.textContent = 'Owned';
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                    } else if (gems < parseInt(price)) {
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                    } else {
+                        btn.textContent = 'Buy';
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                    }
+                }
+            });
+        }
+
+        function getTitleText(title) {
+            const titles = {
+                'swordmaster': '🗡️ Sword Master',
+                'champion': '🏆 Champion',
+                'legendary': '👑 Legendary'
+            };
+            return titles[title] || '';
+        }
+
+        function getTitleColor(title) {
+            const colors = {
+                'swordmaster': '#74b9ff',
+                'champion': '#fdcb6e',
+                'legendary': '#e17055'
+            };
+            return colors[title] || '#333';
+        }
 
         // Initialize the game
         if (checkAuth()) {
