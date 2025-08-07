@@ -71,6 +71,9 @@
 
             <div id="titles-tab" class="shop-tab active">
                 <h3>🏅 Titles (Permanent)</h3>
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-secondary" onclick="unequipTitle()">❌ Remove Current Title</button>
+                </div>
                 <div class="shop-items">
                     <!-- Regular Titles -->
                     <div class="shop-item">
@@ -320,13 +323,23 @@
 
         function loadUserStats() {
             const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
-            const userData = users[currentUser] || {maxLevel: 0, gamesPlayed: 0, gems: 0, title: '', perks: {}, isPremium: false, customTitle: ''};
+            const userData = users[currentUser] || {maxLevel: 0, gamesPlayed: 0, gems: 0, title: '', perks: {}, isPremium: false, customTitle: '', ownedTitles: []};
 
             gems = userData.gems || 0;
             playerTitle = userData.title || '';
             isPremium = userData.isPremium || false;
             customTitle = userData.customTitle || '';
             playerPerks = userData.perks || {doubleDamage: false, extraHealth: false, fastTyping: false, gemBonus: false};
+            
+            // Ensure ownedTitles exists and includes current title
+            if (!userData.ownedTitles) {
+                userData.ownedTitles = [];
+                if (playerTitle && !userData.ownedTitles.includes(playerTitle)) {
+                    userData.ownedTitles.push(playerTitle);
+                    users[currentUser] = userData;
+                    localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+                }
+            }
 
             document.getElementById('best-level').textContent = userData.maxLevel;
             document.getElementById('games-played').textContent = userData.gamesPlayed;
@@ -757,6 +770,11 @@ Type "VERIFIED" if all details match exactly:`);
                 return;
             }
 
+            // Get user's owned titles
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            const userData = users[currentUser] || {};
+            const ownedTitles = userData.ownedTitles || [];
+
             // Check if trying to buy premium title without premium
             const premiumTitles = ['realitybender', 'deathstypist', 'quantum', 'universedestroyer', 'allseeing', 'wordweaver', 'godslayer'];
             if (type === 'title' && premiumTitles.includes(item) && !isPremium) {
@@ -765,13 +783,19 @@ Type "VERIFIED" if all details match exactly:`);
             }
 
             if (type === 'title') {
-                if (playerTitle === item) {
+                if (ownedTitles.includes(item)) {
                     alert('You already own this title! 👑');
                     return;
                 }
-                playerTitle = item;
+                ownedTitles.push(item);
+                playerTitle = item; // Automatically equip new title
                 gems -= price;
-                alert('Title purchased! ✨');
+                
+                // Update user data with owned titles
+                users[currentUser].ownedTitles = ownedTitles;
+                localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+                
+                alert('Title purchased and equipped! ✨');
             } else if (type === 'perk') {
                 if (playerPerks[item]) {
                     alert('You already own this perk! ⚡');
@@ -786,10 +810,36 @@ Type "VERIFIED" if all details match exactly:`);
             updateShopButtons();
         }
 
+        function equipTitle(titleItem) {
+            playerTitle = titleItem;
+            saveUserData();
+            updateShopButtons();
+            
+            const titleText = getTitleText(titleItem);
+            alert(`Title equipped: ${titleText} ✨`);
+        }
+
+        function unequipTitle() {
+            if (!playerTitle) {
+                alert('No title currently equipped!');
+                return;
+            }
+            
+            playerTitle = '';
+            saveUserData();
+            updateShopButtons();
+            alert('Title removed! ❌');
+        }
+
         function updateShopButtons() {
             // Update gems display
             document.getElementById('gems-count').textContent = gems;
             document.getElementById('shop-gems').textContent = gems;
+
+            // Get user's owned titles
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            const userData = users[currentUser] || {};
+            const ownedTitles = userData.ownedTitles || [];
 
             const premiumTitles = ['realitybender', 'deathstypist', 'quantum', 'universedestroyer', 'allseeing', 'wordweaver', 'godslayer'];
 
@@ -800,10 +850,19 @@ Type "VERIFIED" if all details match exactly:`);
                 if (match) {
                     const [, type, item, price] = match;
                     
-                    if (type === 'title' && playerTitle === item) {
-                        btn.textContent = 'Owned';
-                        btn.disabled = true;
-                        btn.style.opacity = '0.5';
+                    if (type === 'title' && ownedTitles.includes(item)) {
+                        if (playerTitle === item) {
+                            btn.textContent = 'Equipped';
+                            btn.disabled = true;
+                            btn.style.opacity = '0.5';
+                            btn.style.background = 'linear-gradient(45deg, #00b894, #00a085)';
+                        } else {
+                            btn.textContent = 'Equip';
+                            btn.disabled = false;
+                            btn.style.opacity = '1';
+                            btn.style.background = 'linear-gradient(45deg, #74b9ff, #0984e3)';
+                            btn.setAttribute('onclick', `equipTitle('${item}')`);
+                        }
                     } else if (type === 'perk' && playerPerks[item]) {
                         btn.textContent = 'Owned';
                         btn.disabled = true;
@@ -819,6 +878,7 @@ Type "VERIFIED" if all details match exactly:`);
                         btn.textContent = 'Buy';
                         btn.disabled = false;
                         btn.style.opacity = '1';
+                        btn.style.background = 'linear-gradient(45deg, #00b894, #00a085)';
                     }
                 }
             });
