@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Battle - Infinite Levels!</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            margin-top: 50px;
+        }
+        #game-container {
+            width: 80%;
+            margin: 0 auto;
+            border: 2px solid #ccc;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        #monster-area, #player-area {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .character {
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            min-width: 150px;
+        }
+        #current-word {
+            font-size: 2em;
+            margin: 20px 0;
+            color: #333;
+        }
+        #typing-input {
+            width: 70%;
+            padding: 10px;
+            font-size: 1.2em;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            outline: none;
+        }
+        #typing-input:focus {
+            border-color: #007bff;
+        }
+        .message {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .correct {
+            color: green;
+        }
+        .incorrect {
+            color: red;
+        }
+        .game-over {
+            color: #d9534f;
+        }
+        #level-info {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+        .boss {
+            color: purple;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Typing Battle!</h1>
+        <p id="level-info">Level: <span id="current-level">1</span></p>
+        <div id="monster-area">
+            <div class="character">
+                <h2 id="monster-name">Monster</h2>
+                <p>Health: <span id="monster-health">100</span></p>
+            </div>
+        </div>
+        <div id="player-area">
+            <div class="character">
+                <h2>Player</h2>
+                <p>Health: <span id="player-health">100</span></p>
+            </div>
+        </div>
+
+        <p id="current-word"></p>
+        <input type="text" id="typing-input" placeholder="Type the word...">
+        <p id="message" class="message"></p>
+    </div>
+
+    <script>
+        const words = ["attack", "defend", "magic", "sword", "shield", "spell", "heal", "potion", "strike", "dodge", "ability", "spirit", "valor", "courage", "fury", "enchant", "bless", "curse", "poison", "fire", "ice", "thunder", "earth", "wind", "light", "darkness", "focus", "meditate", "charge", "parry", "slap", "tackle"];
+        const bossWords = ["destroyer", "annihilator", "overlord", "tyrant", "colossus", "behemoth", "leviathan", "abomination", "conqueror", "devastator", "ram", "tackle", "shoot", "arrow", "sword"];
+
+        let currentWord = "";
+        let monsterHealth = 100;
+        let playerHealth = 100;
+        let currentLevel = 1;
+        let isBossFight = false;
+
+        const monsterHealthSpan = document.getElementById("monster-health");
+        const playerHealthSpan = document.getElementById("player-health");
+        const currentWordDisplay = document.getElementById("current-word");
+        const typingInput = document.getElementById("typing-input");
+        const messageDisplay = document.getElementById("message");
+        const currentLevelDisplay = document.getElementById("current-level");
+        const monsterNameDisplay = document.getElementById("monster-name");
+
+        function startGame() {
+            playerHealth = 100; // Reset player health
+            currentLevel = 1;
+            isBossFight = false;
+            typingInput.disabled = false;
+            monsterNameDisplay.classList.remove("boss");
+            startLevel();
+            updateHealthDisplays();
+            typingInput.value = "";
+            messageDisplay.textContent = "";
+            typingInput.focus();
+        }
+
+        function startLevel() {
+            currentLevelDisplay.textContent = currentLevel;
+
+            if (currentLevel % 5 === 0) {
+                isBossFight = true;
+                monsterHealth = 250;
+                monsterNameDisplay.textContent = "BOSS MONSTER";
+                monsterNameDisplay.classList.add("boss");
+            } else {
+                isBossFight = false;
+                monsterHealth = 100; // Monster health increases with levels
+                monsterNameDisplay.textContent = "Monster";
+                monsterNameDisplay.classList.remove("boss");
+            }
+            updateHealthDisplays();
+            newWord();
+        }
+
+        function newWord() {
+            let wordList = isBossFight ? bossWords : words;
+            const randomIndex = Math.floor(Math.random() * wordList.length);
+            currentWord = wordList[randomIndex];
+            currentWordDisplay.textContent = currentWord;
+        }
+
+        function updateHealthDisplays() {
+            monsterHealthSpan.textContent = monsterHealth;
+            playerHealthSpan.textContent = playerHealth;
+        }
+
+        function attack(target) {
+            let damage = Math.floor(Math.random() * 10) + 5; // Random damage between 5 and 14
+
+            if (target === "monster") {
+                if (isBossFight) {
+                    damage = Math.floor(Math.random() * 20) + 15; // Player deals more damage to boss
+                }
+                monsterHealth -= damage;
+                if (monsterHealth <= 0) {
+                    monsterHealth = 0;
+                    if (isBossFight) {
+                        messageDisplay.textContent = "You defeated the BOSS!";
+                    } else {
+                        messageDisplay.textContent = `You defeated the monster!`;
+                    }
+                    messageDisplay.classList.add("correct");
+                    messageDisplay.classList.remove("incorrect");
+                    levelUp();
+                } else {
+                    messageDisplay.textContent = `You dealt ${damage} damage to the ${monsterNameDisplay.textContent}!`;
+                    messageDisplay.classList.add("correct");
+                    messageDisplay.classList.remove("incorrect");
+                }
+            } else if (target === "player") {
+                let monsterDamage = Math.floor(Math.random() * 12) + 8; // Monster damage between 8 and 19
+
+                if (isBossFight) {
+                    monsterDamage = Math.floor(Math.random() * 25) + 20; // Boss deals more damage
+                }
+
+                playerHealth -= monsterDamage;
+                if (playerHealth <= 0) {
+                    playerHealth = 0;
+                    endGame("The monster defeated you!");
+                } else {
+                    messageDisplay.textContent = `The ${monsterNameDisplay.textContent} dealt ${monsterDamage} damage to you!`;
+                    messageDisplay.classList.add("incorrect");
+                    messageDisplay.classList.remove("correct");
+                }
+            }
+            updateHealthDisplays();
+        }
+
+        function levelUp() {
+            currentLevel++;
+            setTimeout(() => { // Introduce a small delay before the next level starts
+                startLevel();
+            }, 1500); // 1.5 seconds delay
+        }
+
+        function endGame(result) {
+            currentWordDisplay.textContent = result;
+            typingInput.disabled = true;
+            messageDisplay.textContent = "Game Over! Press ctrl+R to restart.";
+            messageDisplay.classList.add("game-over");
+        }
+
+        typingInput.addEventListener("keyup", (event) => {
+            if (typingInput.disabled) return;
+
+            if (event.key === "Enter") {
+                if (typingInput.value.toLowerCase() === currentWord) {
+                    attack("monster");
+                    if (monsterHealth > 0) { // Only get a new word if the monster is not defeated
+                        newWord();
+                    }
+                } else {
+                    messageDisplay.textContent = "Incorrect word! Monster attacks!";
+                    messageDisplay.classList.add("incorrect");
+                    messageDisplay.classList.remove("correct");
+                    attack("player");
+                    // Monster attacks on incorrect word, but we still need a new word for the player to type
+                    newWord();
+                }
+                typingInput.value = "";
+            }
+        });
+
+        startGame();
+    </script>
+</body>
+</html>
