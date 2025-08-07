@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Typing Battle - Leaderboard</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -61,7 +62,7 @@
                 else if (rank === 3) rankDisplay = '🥉';
 
                 // Get user title
-                const userTitle = getUserTitleDisplay(user.title || '', user.customTitle || '', user.isPremium || false, user.youtuberTitles || []);
+                const userTitle = getUserTitleDisplay(user.title || '', user.customTitle || '', user.isPremium || false, user.youtuberTitles || [], user.activeYoutuberTitle || null);
 
                 tableHTML += `
                     <tr class="${rowClass}">
@@ -78,13 +79,13 @@
             content.innerHTML = tableHTML;
         }
 
-        function getUserTitleDisplay(title, customTitle, isPremium, youtuberTitles = []) {
-            // YouTuber titles have highest priority
-            if (youtuberTitles && youtuberTitles.length > 0) {
+        function getUserTitleDisplay(title, customTitle, isPremium, youtuberTitles = [], activeYoutuberTitle = null) {
+            // Active YouTuber title has highest priority
+            if (activeYoutuberTitle) {
                 const youtuberTitlesData = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
-                const firstTitle = youtuberTitlesData[youtuberTitles[0]];
-                if (firstTitle) {
-                    return `<span class="youtuber-title">🎬 ${firstTitle.name}</span>`;
+                const titleData = youtuberTitlesData[activeYoutuberTitle];
+                if (titleData) {
+                    return `<span class="youtuber-title">🎬 ${titleData.name}</span>`;
                 }
             }
             
