@@ -22,6 +22,7 @@
             <div class="nav-links">
                 <a href="leaderboard.html">🏆 Leaderboard</a>
                 <a href="#" onclick="toggleShop()" class="btn">🛒 Shop</a>
+                <a href="#" onclick="togglePremium()" class="btn">💎 Premium</a>
                 <a href="#" onclick="logout()" class="btn">Logout</a>
             </div>
         </div>
@@ -152,6 +153,20 @@
         </div>
     </div>
 
+    <!-- Premium Interface -->
+    <div id="premium-overlay" class="shop-overlay" style="display: none;">
+        <div class="shop-container">
+            <div class="shop-header">
+                <h2>💎 Premium Membership</h2>
+                <span class="close-shop" onclick="togglePremium()">&times;</span>
+            </div>
+            
+            <div id="premium-content">
+                <!-- This will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
     <script>
         const words = ["attack", "defend", "magic", "sword", "shield", "spell", "heal", "potion", "strike", "dodge", "ability", "spirit", "valor", "courage", "fury", "enchant", "bless", "curse", "poison", "fire", "ice", "thunder", "earth", "wind", "light", "darkness", "focus", "meditate", "charge", "parry", "slap", "tackle"];
         const bossWords = ["destroyer", "annihilator", "overlord", "tyrant", "colossus", "behemoth", "leviathan", "abomination", "conqueror", "devastator", "ram", "tackle", "shoot", "arrow", "sword", "chargoggagoggmanchauggagoggchaubunagungamaugg", "dragon", "wyvern", "hydra", "golem", "beast", "fiend", "demon", "devil", "angel", "archangel", "archfiend", "archdemon", "Erythrocytapheresis", "Supercalifragilisticexpialidocious"];
@@ -167,6 +182,8 @@
         let gems = 0;
         let shopVisible = false;
         let playerTitle = "";
+        let isPremium = false;
+        let customTitle = "";
         let playerPerks = {
             doubleDamage: false,
             extraHealth: false,
@@ -197,10 +214,12 @@
 
         function loadUserStats() {
             const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
-            const userData = users[currentUser] || {maxLevel: 0, gamesPlayed: 0, gems: 0, title: '', perks: {}};
+            const userData = users[currentUser] || {maxLevel: 0, gamesPlayed: 0, gems: 0, title: '', perks: {}, isPremium: false, customTitle: ''};
 
             gems = userData.gems || 0;
             playerTitle = userData.title || '';
+            isPremium = userData.isPremium || false;
+            customTitle = userData.customTitle || '';
             playerPerks = userData.perks || {doubleDamage: false, extraHealth: false, fastTyping: false, gemBonus: false};
 
             document.getElementById('best-level').textContent = userData.maxLevel;
@@ -210,12 +229,16 @@
             
             // Update title display
             const titleElement = document.getElementById('player-title');
-            if (playerTitle) {
+            if (isPremium && customTitle) {
+                titleElement.innerHTML = `✨ ${customTitle} `;
+                titleElement.style.color = '#e17055';
+            } else if (playerTitle) {
                 const titleText = getTitleText(playerTitle);
                 titleElement.textContent = titleText + ' ';
                 titleElement.style.color = getTitleColor(playerTitle);
             } else {
                 titleElement.textContent = 'Welcome, ';
+                titleElement.style.color = '#333';
             }
             
             updateShopButtons();
@@ -229,6 +252,8 @@
                 users[currentUser].gems = gems;
                 users[currentUser].title = playerTitle;
                 users[currentUser].perks = playerPerks;
+                users[currentUser].isPremium = isPremium;
+                users[currentUser].customTitle = customTitle;
                 localStorage.setItem('typingBattleUsers', JSON.stringify(users));
                 loadUserStats();
             }
@@ -240,6 +265,8 @@
                 users[currentUser].gems = gems;
                 users[currentUser].title = playerTitle;
                 users[currentUser].perks = playerPerks;
+                users[currentUser].isPremium = isPremium;
+                users[currentUser].customTitle = customTitle;
                 localStorage.setItem('typingBattleUsers', JSON.stringify(users));
                 loadUserStats();
             }
@@ -383,6 +410,9 @@
                     if (playerPerks.gemBonus) {
                         gemsEarned = Math.floor(gemsEarned * 1.5);
                     }
+                    if (isPremium) {
+                        gemsEarned *= 2; // Premium double gems
+                    }
                     
                     gems += gemsEarned;
                     document.getElementById('gems-count').textContent = gems;
@@ -468,6 +498,86 @@
                 typingInput.value = "";
             }
         });
+
+        // Premium Functions
+        function togglePremium() {
+            const premiumVisible = document.getElementById('premium-overlay').style.display === 'flex';
+            document.getElementById('premium-overlay').style.display = premiumVisible ? 'none' : 'flex';
+            if (!premiumVisible) {
+                updatePremiumContent();
+            }
+        }
+
+        function updatePremiumContent() {
+            const content = document.getElementById('premium-content');
+            
+            if (isPremium) {
+                content.innerHTML = `
+                    <div class="premium-status">
+                        ✨ Premium Active ✨
+                    </div>
+                    <div style="text-align: center; margin: 20px 0;">
+                        <h3>Premium Benefits Active:</h3>
+                        <p>💎 Double gems earned</p>
+                        <p>✨ Custom title available</p>
+                        <p>🎯 Priority support</p>
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <h4>Custom Title:</h4>
+                        <input type="text" id="custom-title-input" class="custom-title-input" 
+                               placeholder="Enter your custom title..." value="${customTitle}" maxlength="20">
+                        <button class="btn" onclick="setCustomTitle()">Update Title</button>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="premium-banner">
+                        <h3>🌟 Upgrade to Premium! 🌟</h3>
+                        <p>💎 <strong>Double gems</strong> from all battles</p>
+                        <p>✨ <strong>Custom titles</strong> for ultimate personalization</p>
+                        <p>🎯 <strong>Priority support</strong> and exclusive features</p>
+                        <p><strong>One-time payment: $1.99</strong></p>
+                        <a href="https://cash.app/$TVEGESD" target="_blank" class="premium-btn">
+                            💳 Buy Premium - $1.99
+                        </a>
+                        <div style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">
+                            <p>After payment, click "Activate Premium" below:</p>
+                            <button class="btn btn-secondary" onclick="activatePremium()">
+                                ✨ Activate Premium
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function activatePremium() {
+            if (confirm('Have you completed the $1.99 payment via Cash App?')) {
+                isPremium = true;
+                saveUserData();
+                updatePremiumContent();
+                alert('🌟 Premium activated! You now earn double gems and can set custom titles!');
+            }
+        }
+
+        function setCustomTitle() {
+            const titleInput = document.getElementById('custom-title-input');
+            const newTitle = titleInput.value.trim();
+            
+            if (newTitle.length === 0) {
+                alert('Please enter a title!');
+                return;
+            }
+            
+            if (newTitle.length > 20) {
+                alert('Title must be 20 characters or less!');
+                return;
+            }
+            
+            customTitle = newTitle;
+            saveUserData();
+            alert('✨ Custom title updated!');
+        }
 
         // Shop Functions
         function toggleShop() {
