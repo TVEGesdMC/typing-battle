@@ -52,7 +52,7 @@
             message.className = 'message ' + type;
         }
 
-        function signup() {
+        async function signup() {
             const username = document.getElementById('signup-username').value.trim();
             const password = document.getElementById('signup-password').value;
 
@@ -71,32 +71,33 @@
                 return;
             }
 
-            // Get existing users
-            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            try {
+                const response = await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
 
-            if (users[username]) {
-                showMessage('⚠️ This warrior name is already taken!', 'incorrect');
-                return;
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('currentUser', username);
+                    showMessage('🎉 Welcome to the battle arena! Preparing your weapons...', 'correct');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    showMessage(`⚠️ ${data.message}`, 'incorrect');
+                }
+            } catch (error) {
+                console.error('Signup error:', error);
+                showMessage('⚠️ Server error. Please try again!', 'incorrect');
             }
-
-            // Create new user
-            users[username] = {
-                password: password,
-                maxLevel: 0,
-                gamesPlayed: 0,
-                createdAt: new Date().toISOString()
-            };
-
-            localStorage.setItem('typingBattleUsers', JSON.stringify(users));
-            localStorage.setItem('currentUser', username);
-
-            showMessage('🎉 Welcome to the battle arena! Preparing your weapons...', 'correct');
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 1500);
         }
 
-        function login() {
+        async function login() {
             const username = document.getElementById('login-username').value.trim();
             const password = document.getElementById('login-password').value;
 
@@ -105,23 +106,56 @@
                 return;
             }
 
-            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
 
-            if (!users[username]) {
-                showMessage('⚠️ Unknown warrior name. Join the battle first!', 'incorrect');
-                return;
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('currentUser', username);
+                    showMessage('🎉 Welcome back, warrior! Entering the arena...', 'correct');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    if (data.banData) {
+                        // User is banned, show ban info
+                        showBanInfo(data.banData);
+                    } else {
+                        showMessage(`⚠️ ${data.message}`, 'incorrect');
+                    }
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showMessage('⚠️ Server error. Please try again!', 'incorrect');
             }
+        }
 
-            if (users[username].password !== password) {
-                showMessage('⚠️ Incorrect secret code!', 'incorrect');
-                return;
+        function showBanInfo(banData) {
+            const duration = banData.duration;
+            const reason = banData.reason || 'No reason provided';
+            
+            let timeMessage = '';
+            if (duration === 99999999) {
+                timeMessage = 'This account is banned indefinitely.';
+            } else if (banData.endTime) {
+                const timeLeft = banData.endTime - Date.now();
+                if (timeLeft > 0) {
+                    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    timeMessage = `Time remaining: ${hours}h ${minutes}m`;
+                } else {
+                    timeMessage = 'Ban has expired. Please try logging in again.';
+                }
             }
-
-            localStorage.setItem('currentUser', username);
-            showMessage('🎉 Welcome back, warrior! Entering the arena...', 'correct');
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 1500);
+            
+            showMessage(`🚫 Account Banned\nReason: ${reason}\n${timeMessage}`, 'incorrect');
         }
 
         // Check if user is already logged in
