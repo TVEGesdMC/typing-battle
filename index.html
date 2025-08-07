@@ -116,36 +116,50 @@
                 cheatIndicator.style.fontWeight = 'bold';
                 cheatIndicator.style.animation = 'textGlow 1s ease-in-out infinite alternate';
                 cheatIndicator.style.marginTop = '10px';
-                autoType();
+                
+                // Immediately start typing the current word if game is active
+                if (currentWord && !typingInput.disabled) {
+                    setTimeout(autoType, 100);
+                }
             } else {
-                clearInterval(cheatInterval);
-                cheatInterval = null;
+                if (cheatInterval) {
+                    clearInterval(cheatInterval);
+                    cheatInterval = null;
+                }
             }
         }
 
         function autoType() {
-            if (!cheatMode || typingInput.disabled) return;
+            if (!cheatMode || typingInput.disabled || !currentWord) return;
+
+            // Clear any existing interval
+            if (cheatInterval) {
+                clearInterval(cheatInterval);
+            }
 
             const word = currentWord;
             let index = 0;
+            typingInput.value = ""; // Clear input before starting
 
             cheatInterval = setInterval(() => {
                 if (!cheatMode || typingInput.disabled || index >= word.length) {
-                    if (index >= word.length && cheatMode) {
-                        // Simulate Enter key press
-                        const enterEvent = new KeyboardEvent('keyup', {key: 'Enter'});
-                        typingInput.dispatchEvent(enterEvent);
+                    if (index >= word.length && cheatMode && !typingInput.disabled) {
+                        // Simulate Enter key press after a short delay
+                        setTimeout(() => {
+                            if (cheatMode && !typingInput.disabled) {
+                                const enterEvent = new KeyboardEvent('keyup', {key: 'Enter'});
+                                typingInput.dispatchEvent(enterEvent);
+                            }
+                        }, 100);
                     }
                     clearInterval(cheatInterval);
-                    if (cheatMode && monsterHealth > 0 && !typingInput.disabled) {
-                        setTimeout(autoType, 100); // Start typing next word
-                    }
+                    cheatInterval = null;
                     return;
                 }
 
                 typingInput.value = word.substring(0, index + 1);
                 index++;
-            }, 50); // Type each character every 50ms
+            }, 30); // Faster typing - 30ms per character
         }
 
         function startGame() {
@@ -188,6 +202,11 @@
             const randomIndex = Math.floor(Math.random() * wordList.length);
             currentWord = wordList[randomIndex];
             currentWordDisplay.textContent = currentWord;
+            
+            // If cheat mode is active, automatically start typing the new word
+            if (cheatMode && !typingInput.disabled) {
+                setTimeout(autoType, 200);
+            }
         }
 
         function updateHealthDisplays() {
@@ -269,9 +288,6 @@
                     attack("monster");
                     if (monsterHealth > 0) {
                         newWord();
-                        if (cheatMode) {
-                            setTimeout(autoType, 100);
-                        }
                     }
                 } else {
                     messageDisplay.textContent = "Incorrect word! Monster attacks!";
@@ -279,9 +295,6 @@
                     messageDisplay.classList.remove("correct");
                     attack("player");
                     newWord();
-                    if (cheatMode) {
-                        setTimeout(autoType, 100);
-                    }
                 }
                 typingInput.value = "";
             }
