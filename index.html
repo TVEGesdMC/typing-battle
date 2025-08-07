@@ -331,6 +331,52 @@
                 </div>
                 
                 <div class="admin-section">
+                    <h3>🎬 YouTuber Titles Management</h3>
+                    <div class="youtuber-controls">
+                        <input type="text" id="custom-youtuber-title" class="admin-input" placeholder="Create custom YouTuber title..." maxlength="25">
+                        <button class="btn admin-action-btn" onclick="createYoutuberTitle()">🎬 Create Title</button>
+                    </div>
+                    <div class="youtuber-assign">
+                        <select id="youtuber-title-select" class="admin-select">
+                            <option value="">Select YouTuber Title</option>
+                        </select>
+                        <input type="text" id="assign-username" class="admin-input" placeholder="Username to assign title to...">
+                        <button class="btn admin-action-btn" onclick="assignYoutuberTitle()">👑 Assign Title</button>
+                    </div>
+                    <div id="youtuber-titles-list" class="admin-list"></div>
+                </div>
+                
+                <div class="admin-section">
+                    <h3>🚫 User Management</h3>
+                    <div class="user-controls">
+                        <input type="text" id="target-username" class="admin-input" placeholder="Target username...">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                            <button class="btn" style="background: linear-gradient(45deg, #e74c3c, #c0392b);" onclick="banUser()">🚫 Ban User</button>
+                            <button class="btn" style="background: linear-gradient(45deg, #f39c12, #e67e22);" onclick="unbanUser()">✅ Unban User</button>
+                            <button class="btn" style="background: linear-gradient(45deg, #8e44ad, #9b59b6);" onclick="resetUserProgress()">🔄 Reset Progress</button>
+                            <button class="btn" style="background: linear-gradient(45deg, #2c3e50, #34495e);" onclick="terminateAccount()">💀 Terminate Account</button>
+                        </div>
+                    </div>
+                    <div class="user-actions" style="margin-top: 15px;">
+                        <button class="btn btn-secondary" onclick="viewUserDetails()">👤 View User Details</button>
+                        <button class="btn btn-secondary" onclick="giveGems()">💎 Give Gems</button>
+                        <button class="btn btn-secondary" onclick="takeGems()">💸 Take Gems</button>
+                        <button class="btn btn-secondary" onclick="grantPremium()">⭐ Grant Premium</button>
+                    </div>
+                </div>
+                
+                <div class="admin-section">
+                    <h3>📊 Server Statistics</h3>
+                    <div class="admin-status">
+                        <p><strong>Total Users:</strong> <span id="total-users">-</span></p>
+                        <p><strong>Active Users:</strong> <span id="active-users">-</span></p>
+                        <p><strong>Banned Users:</strong> <span id="banned-users">-</span></p>
+                        <p><strong>Premium Users:</strong> <span id="premium-users">-</span></p>
+                        <button class="btn btn-secondary" onclick="refreshStats()">🔄 Refresh Stats</button>
+                    </div>
+                </div>
+                
+                <div class="admin-section">
                     <h3>📊 Current Status</h3>
                     <div class="admin-status">
                         <p><strong>Active Event:</strong> <span id="current-event-status">None</span></p>
@@ -387,6 +433,15 @@
                 return false;
             }
 
+            // Check if user is banned
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            if (users[currentUser] && users[currentUser].banned) {
+                alert('🚫 Your account has been banned. Contact an administrator for more information.');
+                localStorage.removeItem('currentUser');
+                window.location.href = 'signup.html';
+                return false;
+            }
+
             document.getElementById('username').textContent = currentUser;
             loadUserStats();
             
@@ -434,18 +489,30 @@
             document.getElementById('gems-count').textContent = gems;
             document.getElementById('shop-gems').textContent = gems;
             
-            // Update title display
+            // Update title display - check YouTuber titles first
             const titleElement = document.getElementById('player-title');
-            if (isPremium && customTitle) {
+            const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
+            const userYoutuberTitles = userData.youtuberTitles || [];
+            
+            if (userYoutuberTitles.length > 0 && youtuberTitles[userYoutuberTitles[0]]) {
+                // Show first YouTuber title (highest priority)
+                const youtuberTitle = youtuberTitles[userYoutuberTitles[0]];
+                titleElement.innerHTML = `🎬 ${youtuberTitle.name} `;
+                titleElement.style.color = '#ff4757';
+                titleElement.style.textShadow = '2px 2px 4px rgba(0,0,0,0.3)';
+            } else if (isPremium && customTitle) {
                 titleElement.innerHTML = `✨ ${customTitle} `;
                 titleElement.style.color = '#e17055';
+                titleElement.style.textShadow = '1px 1px 2px rgba(0,0,0,0.3)';
             } else if (playerTitle) {
                 const titleText = getTitleText(playerTitle);
                 titleElement.textContent = titleText + ' ';
                 titleElement.style.color = getTitleColor(playerTitle);
+                titleElement.style.textShadow = '1px 1px 2px rgba(0,0,0,0.2)';
             } else {
                 titleElement.textContent = 'Welcome, ';
                 titleElement.style.color = '#333';
+                titleElement.style.textShadow = 'none';
             }
             
             updateShopButtons();
@@ -1043,6 +1110,13 @@ Type "VERIFIED" if all details match exactly:`);
                 'wordweaver': '🔮 Mystic Wordweaver',
                 'godslayer': '⚡ Godslayer Typist'
             };
+            
+            // Check for YouTuber titles
+            const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
+            if (youtuberTitles[title]) {
+                return `🎬 ${youtuberTitles[title].name}`;
+            }
+            
             return titles[title] || '';
         }
 
@@ -1076,7 +1150,411 @@ Type "VERIFIED" if all details match exactly:`);
             document.getElementById('admin-overlay').style.display = adminVisible ? 'none' : 'flex';
             if (!adminVisible) {
                 updateAdminStatus();
+                loadYoutuberTitles();
+                refreshStats();
             }
+        }
+
+        // YouTuber Titles Functions
+        function createYoutuberTitle() {
+            const titleInput = document.getElementById('custom-youtuber-title');
+            const title = titleInput.value.trim();
+            
+            if (!title) {
+                alert('Please enter a title name!');
+                return;
+            }
+            
+            if (title.length > 25) {
+                alert('Title must be 25 characters or less!');
+                return;
+            }
+            
+            const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
+            const titleId = title.toLowerCase().replace(/[^a-z0-9]/g, '');
+            
+            if (youtuberTitles[titleId]) {
+                alert('This YouTuber title already exists!');
+                return;
+            }
+            
+            youtuberTitles[titleId] = {
+                name: title,
+                createdBy: currentUser,
+                createdAt: new Date().toISOString(),
+                assignedTo: []
+            };
+            
+            localStorage.setItem('youtuberTitles', JSON.stringify(youtuberTitles));
+            titleInput.value = '';
+            loadYoutuberTitles();
+            alert(`🎬 YouTuber title "${title}" created successfully!`);
+        }
+
+        function loadYoutuberTitles() {
+            const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
+            const select = document.getElementById('youtuber-title-select');
+            const listDiv = document.getElementById('youtuber-titles-list');
+            
+            // Clear and populate select
+            select.innerHTML = '<option value="">Select YouTuber Title</option>';
+            
+            let listHTML = '<h4>Existing YouTuber Titles:</h4>';
+            
+            for (const [id, titleData] of Object.entries(youtuberTitles)) {
+                select.innerHTML += `<option value="${id}">${titleData.name}</option>`;
+                
+                listHTML += `
+                    <div class="admin-list-item">
+                        <span><strong>🎬 ${titleData.name}</strong></span>
+                        <span>Assigned to: ${titleData.assignedTo.length} user(s)</span>
+                        <button class="btn btn-secondary btn-sm" onclick="deleteYoutuberTitle('${id}')">🗑️ Delete</button>
+                    </div>
+                `;
+            }
+            
+            if (Object.keys(youtuberTitles).length === 0) {
+                listHTML += '<p style="color: #636e72; font-style: italic;">No YouTuber titles created yet.</p>';
+            }
+            
+            listDiv.innerHTML = listHTML;
+        }
+
+        function assignYoutuberTitle() {
+            const titleSelect = document.getElementById('youtuber-title-select');
+            const usernameInput = document.getElementById('assign-username');
+            const titleId = titleSelect.value;
+            const username = usernameInput.value.trim();
+            
+            if (!titleId) {
+                alert('Please select a YouTuber title!');
+                return;
+            }
+            
+            if (!username) {
+                alert('Please enter a username!');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            if (!users[username]) {
+                alert('User not found!');
+                return;
+            }
+            
+            const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
+            const titleData = youtuberTitles[titleId];
+            
+            if (!titleData) {
+                alert('YouTuber title not found!');
+                return;
+            }
+            
+            // Assign title to user
+            if (!users[username].youtuberTitles) {
+                users[username].youtuberTitles = [];
+            }
+            
+            if (!users[username].youtuberTitles.includes(titleId)) {
+                users[username].youtuberTitles.push(titleId);
+                titleData.assignedTo.push(username);
+                
+                localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+                localStorage.setItem('youtuberTitles', JSON.stringify(youtuberTitles));
+                
+                // Auto-assign to TVEGesdreal as well
+                if (!users['TVEGesdreal'].youtuberTitles) {
+                    users['TVEGesdreal'].youtuberTitles = [];
+                }
+                if (!users['TVEGesdreal'].youtuberTitles.includes(titleId)) {
+                    users['TVEGesdreal'].youtuberTitles.push(titleId);
+                    if (!titleData.assignedTo.includes('TVEGesdreal')) {
+                        titleData.assignedTo.push('TVEGesdreal');
+                    }
+                    localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+                    localStorage.setItem('youtuberTitles', JSON.stringify(youtuberTitles));
+                }
+                
+                usernameInput.value = '';
+                loadYoutuberTitles();
+                alert(`🎬 YouTuber title "${titleData.name}" assigned to ${username} and TVEGesdreal!`);
+            } else {
+                alert('User already has this YouTuber title!');
+            }
+        }
+
+        function deleteYoutuberTitle(titleId) {
+            if (!confirm('Are you sure you want to delete this YouTuber title? This will remove it from all users who have it.')) {
+                return;
+            }
+            
+            const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            
+            // Remove title from all users
+            for (const username in users) {
+                if (users[username].youtuberTitles) {
+                    users[username].youtuberTitles = users[username].youtuberTitles.filter(id => id !== titleId);
+                }
+            }
+            
+            delete youtuberTitles[titleId];
+            
+            localStorage.setItem('youtuberTitles', JSON.stringify(youtuberTitles));
+            localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+            
+            loadYoutuberTitles();
+            alert('YouTuber title deleted successfully!');
+        }
+
+        // User Management Functions
+        function banUser() {
+            const targetInput = document.getElementById('target-username');
+            const username = targetInput.value.trim();
+            
+            if (!username) {
+                alert('Please enter a username!');
+                return;
+            }
+            
+            if (username === 'TVEGesdreal') {
+                alert('Cannot ban the admin account!');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            if (!users[username]) {
+                alert('User not found!');
+                return;
+            }
+            
+            users[username].banned = true;
+            users[username].bannedBy = currentUser;
+            users[username].bannedAt = new Date().toISOString();
+            
+            localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+            targetInput.value = '';
+            
+            alert(`🚫 User "${username}" has been banned!`);
+            refreshStats();
+        }
+
+        function unbanUser() {
+            const targetInput = document.getElementById('target-username');
+            const username = targetInput.value.trim();
+            
+            if (!username) {
+                alert('Please enter a username!');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            if (!users[username]) {
+                alert('User not found!');
+                return;
+            }
+            
+            delete users[username].banned;
+            delete users[username].bannedBy;
+            delete users[username].bannedAt;
+            
+            localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+            targetInput.value = '';
+            
+            alert(`✅ User "${username}" has been unbanned!`);
+            refreshStats();
+        }
+
+        function resetUserProgress() {
+            const targetInput = document.getElementById('target-username');
+            const username = targetInput.value.trim();
+            
+            if (!username) {
+                alert('Please enter a username!');
+                return;
+            }
+            
+            if (username === 'TVEGesdreal') {
+                alert('Cannot reset admin progress!');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            if (!users[username]) {
+                alert('User not found!');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to reset all progress for "${username}"? This cannot be undone.`)) {
+                users[username].maxLevel = 0;
+                users[username].gamesPlayed = 0;
+                users[username].gems = 0;
+                users[username].title = '';
+                users[username].perks = {};
+                users[username].ownedTitles = [];
+                
+                localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+                targetInput.value = '';
+                
+                alert(`🔄 Progress reset for "${username}"!`);
+            }
+        }
+
+        function terminateAccount() {
+            const targetInput = document.getElementById('target-username');
+            const username = targetInput.value.trim();
+            
+            if (!username) {
+                alert('Please enter a username!');
+                return;
+            }
+            
+            if (username === 'TVEGesdreal') {
+                alert('Cannot terminate the admin account!');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            if (!users[username]) {
+                alert('User not found!');
+                return;
+            }
+            
+            if (confirm(`⚠️ CRITICAL ACTION: Terminate account "${username}"? This will permanently delete their account and cannot be undone!`)) {
+                delete users[username];
+                localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+                targetInput.value = '';
+                
+                alert(`💀 Account "${username}" has been terminated!`);
+                refreshStats();
+            }
+        }
+
+        function viewUserDetails() {
+            const targetInput = document.getElementById('target-username');
+            const username = targetInput.value.trim();
+            
+            if (!username) {
+                alert('Please enter a username!');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            if (!users[username]) {
+                alert('User not found!');
+                return;
+            }
+            
+            const user = users[username];
+            let details = `👤 User Details for "${username}":\n\n`;
+            details += `Max Level: ${user.maxLevel || 0}\n`;
+            details += `Games Played: ${user.gamesPlayed || 0}\n`;
+            details += `Gems: ${user.gems || 0}\n`;
+            details += `Title: ${user.title || 'None'}\n`;
+            details += `Premium: ${user.isPremium ? 'Yes' : 'No'}\n`;
+            details += `Custom Title: ${user.customTitle || 'None'}\n`;
+            details += `Banned: ${user.banned ? 'Yes' : 'No'}\n`;
+            details += `Created: ${user.createdAt || 'Unknown'}\n`;
+            
+            if (user.youtuberTitles && user.youtuberTitles.length > 0) {
+                const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
+                details += `YouTuber Titles: `;
+                const titleNames = user.youtuberTitles.map(id => youtuberTitles[id]?.name || id).join(', ');
+                details += titleNames + '\n';
+            }
+            
+            alert(details);
+        }
+
+        function giveGems() {
+            const targetInput = document.getElementById('target-username');
+            const username = targetInput.value.trim();
+            
+            if (!username) {
+                alert('Please enter a username!');
+                return;
+            }
+            
+            const amount = prompt('How many gems to give?');
+            if (!amount || isNaN(amount) || parseInt(amount) <= 0) {
+                alert('Please enter a valid positive number!');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            if (!users[username]) {
+                alert('User not found!');
+                return;
+            }
+            
+            users[username].gems = (users[username].gems || 0) + parseInt(amount);
+            localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+            
+            alert(`💎 Gave ${amount} gems to "${username}"!`);
+        }
+
+        function takeGems() {
+            const targetInput = document.getElementById('target-username');
+            const username = targetInput.value.trim();
+            
+            if (!username) {
+                alert('Please enter a username!');
+                return;
+            }
+            
+            const amount = prompt('How many gems to take?');
+            if (!amount || isNaN(amount) || parseInt(amount) <= 0) {
+                alert('Please enter a valid positive number!');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            if (!users[username]) {
+                alert('User not found!');
+                return;
+            }
+            
+            users[username].gems = Math.max(0, (users[username].gems || 0) - parseInt(amount));
+            localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+            
+            alert(`💸 Took ${amount} gems from "${username}"!`);
+        }
+
+        function grantPremium() {
+            const targetInput = document.getElementById('target-username');
+            const username = targetInput.value.trim();
+            
+            if (!username) {
+                alert('Please enter a username!');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            if (!users[username]) {
+                alert('User not found!');
+                return;
+            }
+            
+            users[username].isPremium = true;
+            users[username].premiumGrantedBy = currentUser;
+            users[username].premiumGrantedAt = new Date().toISOString();
+            
+            localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+            
+            alert(`⭐ Premium granted to "${username}"!`);
+            refreshStats();
+        }
+
+        function refreshStats() {
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            const userCount = Object.keys(users).length;
+            const bannedCount = Object.values(users).filter(user => user.banned).length;
+            const premiumCount = Object.values(users).filter(user => user.isPremium).length;
+            
+            document.getElementById('total-users').textContent = userCount;
+            document.getElementById('active-users').textContent = userCount - bannedCount;
+            document.getElementById('banned-users').textContent = bannedCount;
+            document.getElementById('premium-users').textContent = premiumCount;
         }
 
         function sendGlobalAnnouncement() {
