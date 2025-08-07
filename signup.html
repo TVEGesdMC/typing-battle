@@ -1,115 +1,29 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Typing Battle - Sign Up/Login</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            text-align: center;
-            background-color: #f0f0f0;
-            margin-top: 50px;
-        }
-        .auth-container {
-            width: 400px;
-            margin: 0 auto;
-            border: 2px solid #ccc;
-            padding: 30px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 10px;
-            font-size: 1em;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .btn {
-            background-color: #007bff;
-            color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1em;
-            margin: 10px;
-        }
-        .btn:hover {
-            background-color: #0056b3;
-        }
-        .btn-secondary {
-            background-color: #6c757d;
-        }
-        .btn-secondary:hover {
-            background-color: #545b62;
-        }
-        .message {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 4px;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .toggle-link {
-            color: #007bff;
-            cursor: pointer;
-            text-decoration: underline;
-            margin-top: 15px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="auth-container">
-        <h1>Typing Battle</h1>
-        
-        <div id="signup-form">
-            <h2>Sign Up</h2>
-            <div class="form-group">
-                <label for="signup-username">Username:</label>
-                <input type="text" id="signup-username" required>
-            </div>
-            <div class="form-group">
-                <label for="signup-password">Password:</label>
-                <input type="password" id="signup-password" required>
-            </div>
-            <button class="btn" onclick="signup()">Sign Up</button>
-            <div class="toggle-link" onclick="toggleForm()">Already have an account? Login</div>
+        <h1>⚔️ Typing Battle ⚔️</h1>
+
+        <div id="signup-form" class="auth-form">
+            <h2>🛡️ Join the Battle</h2>
+            <input type="text" id="signup-username" placeholder="Choose your warrior name..." required>
+            <input type="password" id="signup-password" placeholder="Create your secret code..." required>
+            <button class="btn" onclick="signup()">Enter the Arena</button>
+            <div class="toggle-link" onclick="toggleForm()">Already a warrior? Login here</div>
         </div>
 
-        <div id="login-form" style="display: none;">
-            <h2>Login</h2>
-            <div class="form-group">
-                <label for="login-username">Username:</label>
-                <input type="text" id="login-username" required>
-            </div>
-            <div class="form-group">
-                <label for="login-password">Password:</label>
-                <input type="password" id="login-password" required>
-            </div>
-            <button class="btn" onclick="login()">Login</button>
-            <div class="toggle-link" onclick="toggleForm()">Don't have an account? Sign Up</div>
+        <div id="login-form" class="auth-form" style="display: none;">
+            <h2>🗡️ Welcome Back, Warrior</h2>
+            <input type="text" id="login-username" placeholder="Your warrior name..." required>
+            <input type="password" id="login-password" placeholder="Your secret code..." required>
+            <button class="btn" onclick="login()">Return to Battle</button>
+            <div class="toggle-link" onclick="toggleForm()">New warrior? Join the battle</div>
         </div>
 
         <div id="message"></div>
@@ -120,7 +34,7 @@
             const signupForm = document.getElementById('signup-form');
             const loginForm = document.getElementById('login-form');
             const message = document.getElementById('message');
-            
+
             if (signupForm.style.display === 'none') {
                 signupForm.style.display = 'block';
                 loginForm.style.display = 'none';
@@ -142,25 +56,25 @@
             const password = document.getElementById('signup-password').value;
 
             if (!username || !password) {
-                showMessage('Please fill in all fields', 'error');
+                showMessage('⚠️ Please fill in all fields to enter the battle!', 'incorrect');
                 return;
             }
 
             if (username.length < 3) {
-                showMessage('Username must be at least 3 characters long', 'error');
+                showMessage('⚠️ Warrior name must be at least 3 characters long!', 'incorrect');
                 return;
             }
 
             if (password.length < 4) {
-                showMessage('Password must be at least 4 characters long', 'error');
+                showMessage('⚠️ Secret code must be at least 4 characters long!', 'incorrect');
                 return;
             }
 
             // Get existing users
             const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
-            
+
             if (users[username]) {
-                showMessage('Username already exists', 'error');
+                showMessage('⚠️ This warrior name is already taken!', 'incorrect');
                 return;
             }
 
@@ -174,8 +88,8 @@
 
             localStorage.setItem('typingBattleUsers', JSON.stringify(users));
             localStorage.setItem('currentUser', username);
-            
-            showMessage('Account created successfully! Redirecting to game...', 'success');
+
+            showMessage('🎉 Welcome to the battle arena! Preparing your weapons...', 'correct');
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 1500);
@@ -186,24 +100,24 @@
             const password = document.getElementById('login-password').value;
 
             if (!username || !password) {
-                showMessage('Please fill in all fields', 'error');
+                showMessage('⚠️ Please enter your warrior credentials!', 'incorrect');
                 return;
             }
 
             const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
-            
+
             if (!users[username]) {
-                showMessage('Username not found', 'error');
+                showMessage('⚠️ Unknown warrior name. Join the battle first!', 'incorrect');
                 return;
             }
 
             if (users[username].password !== password) {
-                showMessage('Incorrect password', 'error');
+                showMessage('⚠️ Incorrect secret code!', 'incorrect');
                 return;
             }
 
             localStorage.setItem('currentUser', username);
-            showMessage('Login successful! Redirecting to game...', 'success');
+            showMessage('🎉 Welcome back, warrior! Entering the arena...', 'correct');
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 1500);
