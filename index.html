@@ -23,11 +23,34 @@
                 <a href="leaderboard.html">🏆 Leaderboard</a>
                 <a href="#" onclick="toggleShop()" class="btn">🛒 Shop</a>
                 <a href="#" onclick="togglePremium()" class="btn">💎 Premium</a>
+                <a href="#" onclick="toggleAdmin()" class="btn admin-btn" id="admin-btn" style="display: none;">⚡ Admin Panel</a>
                 <a href="#" onclick="logout()" class="btn">Logout</a>
             </div>
         </div>
 
         <h1>Typing Battle!</h1>
+        
+        <!-- Global Announcements -->
+        <div id="global-announcements" class="global-announcements" style="display: none;">
+            <div class="announcement-content">
+                <div class="announcement-header">
+                    <span class="announcement-tag">📢 GLOBAL ANNOUNCEMENT</span>
+                    <span class="announcement-close" onclick="closeAnnouncement()">&times;</span>
+                </div>
+                <div class="announcement-message" id="announcement-text"></div>
+                <div class="announcement-author" id="announcement-author"></div>
+            </div>
+        </div>
+        
+        <!-- Global Events -->
+        <div id="global-event-banner" class="global-event-banner" style="display: none;">
+            <div class="event-content">
+                <span class="event-icon">🎯</span>
+                <span class="event-text" id="event-text"></span>
+                <span class="event-multiplier" id="event-multiplier"></span>
+            </div>
+        </div>
+        
         <p id="level-info">Level: <span id="current-level">1</span></p>
         <div id="monster-area">
             <div class="character">
@@ -276,6 +299,49 @@
         </div>
     </div>
 
+    <!-- Admin Panel Interface -->
+    <div id="admin-overlay" class="shop-overlay" style="display: none;">
+        <div class="admin-container">
+            <div class="shop-header">
+                <h2>⚡ Admin Control Panel</h2>
+                <span class="close-shop" onclick="toggleAdmin()">&times;</span>
+            </div>
+            
+            <div class="admin-content">
+                <div class="admin-section">
+                    <h3>📢 Global Announcements</h3>
+                    <textarea id="announcement-input" class="admin-textarea" placeholder="Enter your global announcement..." maxlength="200"></textarea>
+                    <button class="btn admin-action-btn" onclick="sendGlobalAnnouncement()">📢 Send Announcement</button>
+                </div>
+                
+                <div class="admin-section">
+                    <h3>🎯 Global Events</h3>
+                    <div class="event-controls">
+                        <select id="event-type" class="admin-select">
+                            <option value="double-gems">💎 Double Gems Event</option>
+                            <option value="triple-gems">💎 Triple Gems Event</option>
+                            <option value="speed-boost">⚡ Speed Boost Event</option>
+                            <option value="mega-damage">💪 Mega Damage Event</option>
+                            <option value="boss-rush">👹 Boss Rush Event</option>
+                        </select>
+                        <input type="number" id="event-duration" class="admin-input" placeholder="Duration (minutes)" min="1" max="60" value="10">
+                        <button class="btn admin-action-btn" onclick="startGlobalEvent()">🎯 Start Event</button>
+                        <button class="btn btn-secondary" onclick="endGlobalEvent()">🛑 End Current Event</button>
+                    </div>
+                </div>
+                
+                <div class="admin-section">
+                    <h3>📊 Current Status</h3>
+                    <div class="admin-status">
+                        <p><strong>Active Event:</strong> <span id="current-event-status">None</span></p>
+                        <p><strong>Time Remaining:</strong> <span id="event-time-remaining">-</span></p>
+                        <p><strong>Last Announcement:</strong> <span id="last-announcement">None</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const words = ["attack", "defend", "magic", "sword", "shield", "spell", "heal", "potion", "strike", "dodge", "ability", "spirit", "valor", "courage", "fury", "enchant", "bless", "curse", "poison", "fire", "ice", "thunder", "earth", "wind", "light", "darkness", "focus", "meditate", "charge", "parry", "slap", "tackle"];
         const bossWords = ["destroyer", "annihilator", "overlord", "tyrant", "colossus", "behemoth", "leviathan", "abomination", "conqueror", "devastator", "ram", "tackle", "shoot", "arrow", "sword", "chargoggagoggmanchauggagoggchaubunagungamaugg", "dragon", "wyvern", "hydra", "golem", "beast", "fiend", "demon", "devil", "angel", "archangel", "archfiend", "archdemon", "Erythrocytapheresis", "Supercalifragilisticexpialidocious"];
@@ -299,6 +365,11 @@
             fastTyping: false,
             gemBonus: false
         };
+        
+        // Global events and admin system
+        let globalEvent = null;
+        let eventEndTime = null;
+        let eventCheckInterval = null;
 
         const monsterHealthSpan = document.getElementById("monster-health");
         const playerHealthSpan = document.getElementById("player-health");
@@ -318,6 +389,15 @@
 
             document.getElementById('username').textContent = currentUser;
             loadUserStats();
+            
+            // Show admin panel for special user
+            if (currentUser === 'TVEGesdreal') {
+                document.getElementById('admin-btn').style.display = 'inline-block';
+            }
+            
+            // Check for active global events
+            checkGlobalEvents();
+            
             return true;
         }
 
@@ -539,6 +619,15 @@
                     }
                     if (isPremium) {
                         gemsEarned *= 2; // Premium double gems
+                    }
+                    
+                    // Apply global event bonuses
+                    if (globalEvent) {
+                        if (globalEvent.type === 'double-gems') {
+                            gemsEarned *= 2;
+                        } else if (globalEvent.type === 'triple-gems') {
+                            gemsEarned *= 3;
+                        }
                     }
                     
                     gems += gemsEarned;
@@ -974,6 +1063,240 @@ Type "VERIFIED" if all details match exactly:`);
                 'godslayer': '#c0392b'
             };
             return colors[title] || '#333';
+        }
+
+        // Admin Panel Functions
+        function toggleAdmin() {
+            if (currentUser !== 'TVEGesdreal') {
+                alert('Access Denied! Admin privileges required.');
+                return;
+            }
+            
+            const adminVisible = document.getElementById('admin-overlay').style.display === 'flex';
+            document.getElementById('admin-overlay').style.display = adminVisible ? 'none' : 'flex';
+            if (!adminVisible) {
+                updateAdminStatus();
+            }
+        }
+
+        function sendGlobalAnnouncement() {
+            const messageInput = document.getElementById('announcement-input');
+            const message = messageInput.value.trim();
+            
+            if (!message) {
+                alert('Please enter an announcement message!');
+                return;
+            }
+            
+            if (message.length > 200) {
+                alert('Announcement must be 200 characters or less!');
+                return;
+            }
+            
+            // Store announcement globally
+            const announcement = {
+                message: message,
+                author: 'TVEGesdreal',
+                tag: '👑 Admin',
+                timestamp: Date.now(),
+                expires: Date.now() + (5 * 60 * 1000) // 5 minutes
+            };
+            
+            localStorage.setItem('globalAnnouncement', JSON.stringify(announcement));
+            messageInput.value = '';
+            
+            // Show announcement immediately
+            showGlobalAnnouncement(announcement);
+            
+            alert('📢 Global announcement sent! All players will see this message.');
+            updateAdminStatus();
+        }
+
+        function startGlobalEvent() {
+            const eventType = document.getElementById('event-type').value;
+            const duration = parseInt(document.getElementById('event-duration').value);
+            
+            if (!duration || duration < 1 || duration > 60) {
+                alert('Please enter a valid duration (1-60 minutes)!');
+                return;
+            }
+            
+            const eventData = {
+                type: eventType,
+                startTime: Date.now(),
+                endTime: Date.now() + (duration * 60 * 1000),
+                duration: duration
+            };
+            
+            localStorage.setItem('globalEvent', JSON.stringify(eventData));
+            globalEvent = eventData;
+            eventEndTime = eventData.endTime;
+            
+            showGlobalEvent();
+            startEventTimer();
+            
+            const eventNames = {
+                'double-gems': '💎 Double Gems Event',
+                'triple-gems': '💎 Triple Gems Event',
+                'speed-boost': '⚡ Speed Boost Event',
+                'mega-damage': '💪 Mega Damage Event',
+                'boss-rush': '👹 Boss Rush Event'
+            };
+            
+            alert(`🎯 ${eventNames[eventType]} started for ${duration} minutes!`);
+            updateAdminStatus();
+        }
+
+        function endGlobalEvent() {
+            localStorage.removeItem('globalEvent');
+            globalEvent = null;
+            eventEndTime = null;
+            
+            if (eventCheckInterval) {
+                clearInterval(eventCheckInterval);
+                eventCheckInterval = null;
+            }
+            
+            document.getElementById('global-event-banner').style.display = 'none';
+            alert('🛑 Global event ended!');
+            updateAdminStatus();
+        }
+
+        function checkGlobalEvents() {
+            // Check for active global events
+            const savedEvent = localStorage.getItem('globalEvent');
+            if (savedEvent) {
+                const eventData = JSON.parse(savedEvent);
+                if (eventData.endTime > Date.now()) {
+                    globalEvent = eventData;
+                    eventEndTime = eventData.endTime;
+                    showGlobalEvent();
+                    startEventTimer();
+                } else {
+                    localStorage.removeItem('globalEvent');
+                }
+            }
+            
+            // Check for active announcements
+            const savedAnnouncement = localStorage.getItem('globalAnnouncement');
+            if (savedAnnouncement) {
+                const announcementData = JSON.parse(savedAnnouncement);
+                if (announcementData.expires > Date.now()) {
+                    showGlobalAnnouncement(announcementData);
+                } else {
+                    localStorage.removeItem('globalAnnouncement');
+                }
+            }
+        }
+
+        function showGlobalEvent() {
+            if (!globalEvent) return;
+            
+            const banner = document.getElementById('global-event-banner');
+            const eventText = document.getElementById('event-text');
+            const eventMultiplier = document.getElementById('event-multiplier');
+            
+            const eventNames = {
+                'double-gems': 'Double Gems Active!',
+                'triple-gems': 'Triple Gems Active!',
+                'speed-boost': 'Speed Boost Active!',
+                'mega-damage': 'Mega Damage Active!',
+                'boss-rush': 'Boss Rush Active!'
+            };
+            
+            const eventColors = {
+                'double-gems': '#fdcb6e',
+                'triple-gems': '#e17055',
+                'speed-boost': '#74b9ff',
+                'mega-damage': '#ff6b6b',
+                'boss-rush': '#8e44ad'
+            };
+            
+            eventText.textContent = eventNames[globalEvent.type] || 'Special Event Active!';
+            eventMultiplier.textContent = getEventMultiplierText(globalEvent.type);
+            banner.style.background = `linear-gradient(45deg, ${eventColors[globalEvent.type]}, #fff)`;
+            banner.style.display = 'block';
+        }
+
+        function getEventMultiplierText(eventType) {
+            const multipliers = {
+                'double-gems': '2x Gems',
+                'triple-gems': '3x Gems',
+                'speed-boost': 'Faster Typing',
+                'mega-damage': '3x Damage',
+                'boss-rush': 'All Bosses'
+            };
+            return multipliers[eventType] || 'Special Effect';
+        }
+
+        function showGlobalAnnouncement(announcement) {
+            const announcementDiv = document.getElementById('global-announcements');
+            const announcementText = document.getElementById('announcement-text');
+            const announcementAuthor = document.getElementById('announcement-author');
+            
+            announcementText.textContent = announcement.message;
+            announcementAuthor.textContent = `- ${announcement.tag} ${announcement.author}`;
+            announcementDiv.style.display = 'block';
+        }
+
+        function closeAnnouncement() {
+            document.getElementById('global-announcements').style.display = 'none';
+        }
+
+        function startEventTimer() {
+            if (eventCheckInterval) {
+                clearInterval(eventCheckInterval);
+            }
+            
+            eventCheckInterval = setInterval(() => {
+                if (!globalEvent || !eventEndTime) {
+                    clearInterval(eventCheckInterval);
+                    eventCheckInterval = null;
+                    return;
+                }
+                
+                const timeLeft = eventEndTime - Date.now();
+                
+                if (timeLeft <= 0) {
+                    endGlobalEvent();
+                } else {
+                    // Update admin panel if open
+                    const timeRemaining = document.getElementById('event-time-remaining');
+                    if (timeRemaining) {
+                        const minutes = Math.floor(timeLeft / 60000);
+                        const seconds = Math.floor((timeLeft % 60000) / 1000);
+                        timeRemaining.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateAdminStatus() {
+            const currentEventStatus = document.getElementById('current-event-status');
+            const eventTimeRemaining = document.getElementById('event-time-remaining');
+            const lastAnnouncement = document.getElementById('last-announcement');
+            
+            if (globalEvent) {
+                const eventNames = {
+                    'double-gems': '💎 Double Gems',
+                    'triple-gems': '💎 Triple Gems',
+                    'speed-boost': '⚡ Speed Boost',
+                    'mega-damage': '💪 Mega Damage',
+                    'boss-rush': '👹 Boss Rush'
+                };
+                currentEventStatus.textContent = eventNames[globalEvent.type] || 'Unknown Event';
+            } else {
+                currentEventStatus.textContent = 'None';
+                eventTimeRemaining.textContent = '-';
+            }
+            
+            const savedAnnouncement = localStorage.getItem('globalAnnouncement');
+            if (savedAnnouncement) {
+                const announcement = JSON.parse(savedAnnouncement);
+                lastAnnouncement.textContent = announcement.message.substring(0, 30) + '...';
+            } else {
+                lastAnnouncement.textContent = 'None';
+            }
         }
 
         // Initialize the game
