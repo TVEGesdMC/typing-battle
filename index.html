@@ -72,6 +72,7 @@
             <div id="titles-tab" class="shop-tab active">
                 <h3>🏅 Titles (Permanent)</h3>
                 <div class="shop-items">
+                    <!-- Regular Titles -->
                     <div class="shop-item">
                         <div class="item-info">
                             <h4>🗡️ Sword Master</h4>
@@ -100,6 +101,111 @@
                         <div class="item-price">
                             <span class="price">2500 💎</span>
                             <button onclick="buyItem('title', 'legendary', 2500)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <h4>🔥 Pyromaniac</h4>
+                            <p>Burns through enemies like fire</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">1500 💎</span>
+                            <button onclick="buyItem('title', 'pyromaniac', 1500)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <h4>⚡ Lightning Fingers</h4>
+                            <p>Types faster than lightning strikes</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">2000 💎</span>
+                            <button onclick="buyItem('title', 'lightning', 2000)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                    <div class="shop-item">
+                        <div class="item-info">
+                            <h4>🌟 Starborn</h4>
+                            <p>Born from the stars themselves</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">3000 💎</span>
+                            <button onclick="buyItem('title', 'starborn', 3000)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Premium Only Titles -->
+                    <div class="shop-section-divider" style="margin: 20px 0; padding: 10px; background: linear-gradient(45deg, #fdcb6e, #e17055); border-radius: 10px; color: white; text-align: center; font-weight: bold;">
+                        ✨ PREMIUM EXCLUSIVE TITLES ✨
+                    </div>
+                    <div class="shop-item premium-only">
+                        <div class="item-info">
+                            <h4>🌈 Reality Bender</h4>
+                            <p>Bends the laws of typing reality (Premium Only)</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">5000 💎</span>
+                            <button onclick="buyItem('title', 'realitybender', 5000)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                    <div class="shop-item premium-only">
+                        <div class="item-info">
+                            <h4>💀 Death's Typist</h4>
+                            <p>Even Death fears your typing speed (Premium Only)</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">6000 💎</span>
+                            <button onclick="buyItem('title', 'deathstypist', 6000)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                    <div class="shop-item premium-only">
+                        <div class="item-info">
+                            <h4>🚀 Quantum Warrior</h4>
+                            <p>Exists in multiple typing dimensions (Premium Only)</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">7500 💎</span>
+                            <button onclick="buyItem('title', 'quantum', 7500)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                    <div class="shop-item premium-only">
+                        <div class="item-info">
+                            <h4>🌌 Universe Destroyer</h4>
+                            <p>Your typing destroys entire universes (Premium Only)</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">10000 💎</span>
+                            <button onclick="buyItem('title', 'universedestroyer', 10000)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                    <div class="shop-item premium-only">
+                        <div class="item-info">
+                            <h4>👁️ The All-Seeing Typer</h4>
+                            <p>Sees all words before they appear (Premium Only)</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">12000 💎</span>
+                            <button onclick="buyItem('title', 'allseeing', 12000)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                    <div class="shop-item premium-only">
+                        <div class="item-info">
+                            <h4>🔮 Mystic Wordweaver</h4>
+                            <p>Weaves words from pure magic (Premium Only)</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">8000 💎</span>
+                            <button onclick="buyItem('title', 'wordweaver', 8000)" class="buy-btn">Buy</button>
+                        </div>
+                    </div>
+                    <div class="shop-item premium-only">
+                        <div class="item-info">
+                            <h4>⚡ Godslayer Typist</h4>
+                            <p>Even gods fear your keyboard (Premium Only)</p>
+                        </div>
+                        <div class="item-price">
+                            <span class="price">15000 💎</span>
+                            <button onclick="buyItem('title', 'godslayer', 15000)" class="buy-btn">Buy</button>
                         </div>
                     </div>
                 </div>
@@ -521,12 +627,20 @@
                         <p>💎 Double gems earned</p>
                         <p>✨ Custom title available</p>
                         <p>🎯 Priority support</p>
+                        <p>🏪 Access to exclusive premium titles</p>
                     </div>
                     <div style="margin: 20px 0;">
                         <h4>Custom Title:</h4>
                         <input type="text" id="custom-title-input" class="custom-title-input" 
                                placeholder="Enter your custom title..." value="${customTitle}" maxlength="20">
                         <button class="btn" onclick="setCustomTitle()">Update Title</button>
+                    </div>
+                    <div style="margin: 20px 0; padding-top: 20px; border-top: 2px solid #ddd;">
+                        <h4 style="color: #e17055;">⚠️ Disable Premium</h4>
+                        <p style="color: #636e72; font-size: 0.9em;">Warning: You'll need to pay again to reactivate</p>
+                        <button class="btn" style="background: linear-gradient(45deg, #e17055, #d63031);" onclick="disablePremium()">
+                            🚫 Disable Premium
+                        </button>
                     </div>
                 `;
             } else {
@@ -535,15 +649,20 @@
                         <h3>🌟 Upgrade to Premium! 🌟</h3>
                         <p>💎 <strong>Double gems</strong> from all battles</p>
                         <p>✨ <strong>Custom titles</strong> for ultimate personalization</p>
+                        <p>🏪 <strong>Exclusive premium titles</strong> in the shop</p>
                         <p>🎯 <strong>Priority support</strong> and exclusive features</p>
                         <p><strong>One-time payment: $1.99</strong></p>
                         <a href="https://cash.app/$TVEGESD" target="_blank" class="premium-btn">
                             💳 Buy Premium - $1.99
                         </a>
-                        <div style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">
-                            <p>After payment, click "Activate Premium" below:</p>
-                            <button class="btn btn-secondary" onclick="activatePremium()">
-                                ✨ Activate Premium
+                        <div style="margin-top: 15px;">
+                            <h4>Receipt Verification Required:</h4>
+                            <p style="font-size: 0.9em; color: #636e72; margin-bottom: 10px;">
+                                Upload your Cash App receipt showing $1.99 payment to $TVEGESD from today
+                            </p>
+                            <input type="file" id="receipt-upload" accept="image/*,.pdf" class="custom-title-input" style="margin-bottom: 10px;">
+                            <button class="btn btn-secondary" onclick="verifyReceipt()">
+                                📄 Verify Receipt & Activate Premium
                             </button>
                         </div>
                     </div>
@@ -551,12 +670,48 @@
             }
         }
 
-        function activatePremium() {
-            if (confirm('Have you completed the $1.99 payment via Cash App?')) {
+        function verifyReceipt() {
+            const fileInput = document.getElementById('receipt-upload');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('⚠️ Please upload your receipt first!');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const today = new Date().toDateString();
+            
+            // Simulate receipt verification (in a real app, this would be server-side)
+            const verificationPrompt = prompt(`Receipt Verification:
+            
+Please confirm the following details from your receipt:
+1. Amount paid: $1.99
+2. Recipient: $TVEGESD
+3. Date: ${today}
+
+Type "VERIFIED" if all details match exactly:`);
+            
+            if (verificationPrompt === "VERIFIED") {
                 isPremium = true;
+                const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+                if (users[currentUser]) {
+                    users[currentUser].premiumActivationDate = today;
+                    localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+                }
                 saveUserData();
                 updatePremiumContent();
-                alert('🌟 Premium activated! You now earn double gems and can set custom titles!');
+                alert('🌟 Premium activated! You now earn double gems, can set custom titles, and access exclusive premium titles in the shop!');
+            } else {
+                alert('❌ Sorry, you did not pay for premium. Please ensure your receipt shows exactly $1.99 paid to $TVEGESD from today.');
+            }
+        }
+
+        function disablePremium() {
+            if (confirm('⚠️ Are you sure you want to disable Premium? You will lose all premium benefits and need to pay again to reactivate.')) {
+                isPremium = false;
+                customTitle = '';
+                saveUserData();
+                updatePremiumContent();
+                alert('🚫 Premium has been disabled. You will need to purchase again to reactivate.');
             }
         }
 
@@ -602,7 +757,18 @@
                 return;
             }
 
+            // Check if trying to buy premium title without premium
+            const premiumTitles = ['realitybender', 'deathstypist', 'quantum', 'universedestroyer', 'allseeing', 'wordweaver', 'godslayer'];
+            if (type === 'title' && premiumTitles.includes(item) && !isPremium) {
+                alert('🌟 Premium membership required to purchase this title! Upgrade to Premium first.');
+                return;
+            }
+
             if (type === 'title') {
+                if (playerTitle === item) {
+                    alert('You already own this title! 👑');
+                    return;
+                }
                 playerTitle = item;
                 gems -= price;
                 alert('Title purchased! ✨');
@@ -625,7 +791,9 @@
             document.getElementById('gems-count').textContent = gems;
             document.getElementById('shop-gems').textContent = gems;
 
-            // Update buy buttons
+            const premiumTitles = ['realitybender', 'deathstypist', 'quantum', 'universedestroyer', 'allseeing', 'wordweaver', 'godslayer'];
+
+            // Update buy buttons and premium-only items
             document.querySelectorAll('.buy-btn').forEach(btn => {
                 const onclick = btn.getAttribute('onclick');
                 const match = onclick.match(/buyItem\('(\w+)', '(\w+)', (\d+)\)/);
@@ -640,6 +808,10 @@
                         btn.textContent = 'Owned';
                         btn.disabled = true;
                         btn.style.opacity = '0.5';
+                    } else if (type === 'title' && premiumTitles.includes(item) && !isPremium) {
+                        btn.textContent = 'Premium Required';
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
                     } else if (gems < parseInt(price)) {
                         btn.disabled = true;
                         btn.style.opacity = '0.5';
@@ -650,13 +822,36 @@
                     }
                 }
             });
+
+            // Style premium-only items
+            document.querySelectorAll('.premium-only').forEach(item => {
+                if (!isPremium) {
+                    item.style.opacity = '0.6';
+                    item.style.background = 'linear-gradient(145deg, #f8f9fa, #e9ecef)';
+                    item.style.border = '2px dashed #dee2e6';
+                } else {
+                    item.style.opacity = '1';
+                    item.style.background = 'linear-gradient(145deg, #fff5e6, #ffe0b3)';
+                    item.style.border = '2px solid #fdcb6e';
+                }
+            });
         }
 
         function getTitleText(title) {
             const titles = {
                 'swordmaster': '🗡️ Sword Master',
                 'champion': '🏆 Champion',
-                'legendary': '👑 Legendary'
+                'legendary': '👑 Legendary',
+                'pyromaniac': '🔥 Pyromaniac',
+                'lightning': '⚡ Lightning Fingers',
+                'starborn': '🌟 Starborn',
+                'realitybender': '🌈 Reality Bender',
+                'deathstypist': '💀 Death\'s Typist',
+                'quantum': '🚀 Quantum Warrior',
+                'universedestroyer': '🌌 Universe Destroyer',
+                'allseeing': '👁️ All-Seeing Typer',
+                'wordweaver': '🔮 Mystic Wordweaver',
+                'godslayer': '⚡ Godslayer Typist'
             };
             return titles[title] || '';
         }
@@ -665,7 +860,17 @@
             const colors = {
                 'swordmaster': '#74b9ff',
                 'champion': '#fdcb6e',
-                'legendary': '#e17055'
+                'legendary': '#e17055',
+                'pyromaniac': '#ff6b6b',
+                'lightning': '#f39c12',
+                'starborn': '#9b59b6',
+                'realitybender': '#e74c3c',
+                'deathstypist': '#2c3e50',
+                'quantum': '#3498db',
+                'universedestroyer': '#8e44ad',
+                'allseeing': '#d35400',
+                'wordweaver': '#27ae60',
+                'godslayer': '#c0392b'
             };
             return colors[title] || '#333';
         }
