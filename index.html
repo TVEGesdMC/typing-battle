@@ -328,6 +328,14 @@
             gems = userData.gems || 0;
             playerTitle = userData.title || '';
             isPremium = userData.isPremium || false;
+            
+            // Auto-activate premium for special username
+            if (currentUser === 'TVEGesdreal' && !isPremium) {
+                isPremium = true;
+                userData.isPremium = true;
+                users[currentUser] = userData;
+                localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+            }
             customTitle = userData.customTitle || '';
             playerPerks = userData.perks || {doubleDamage: false, extraHealth: false, fastTyping: false, gemBonus: false};
             
@@ -629,6 +637,13 @@
 
         function updatePremiumContent() {
             const content = document.getElementById('premium-content');
+            
+            // Check for special username that gets free premium
+            if (currentUser === 'TVEGesdreal' && !isPremium) {
+                isPremium = true;
+                saveUserData();
+                alert('🌟 Welcome VIP! Premium activated automatically for your account!');
+            }
             
             if (isPremium) {
                 content.innerHTML = `
