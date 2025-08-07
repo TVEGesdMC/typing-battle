@@ -646,7 +646,10 @@
                         <h4>Custom Title:</h4>
                         <input type="text" id="custom-title-input" class="custom-title-input" 
                                placeholder="Enter your custom title..." value="${customTitle}" maxlength="20">
-                        <button class="btn" onclick="setCustomTitle()">Update Title</button>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button class="btn" onclick="setCustomTitle()">Update Title</button>
+                            <button class="btn btn-secondary" onclick="disableCustomTitle()">❌ Disable Custom Title</button>
+                        </div>
                     </div>
                     <div style="margin: 20px 0; padding-top: 20px; border-top: 2px solid #ddd;">
                         <h4 style="color: #e17055;">⚠️ Disable Premium</h4>
@@ -673,7 +676,7 @@
                             <p style="font-size: 0.9em; color: #636e72; margin-bottom: 10px;">
                                 Upload your Cash App receipt showing $1.99 payment to $TVEGESD from today
                             </p>
-                            <input type="file" id="receipt-upload" accept="image/*,.pdf" class="custom-title-input" style="margin-bottom: 10px;">
+                            <input type="url" id="receipt-link" placeholder="Paste your Cash App receipt link here..." class="custom-title-input" style="margin-bottom: 10px;">
                             <button class="btn btn-secondary" onclick="verifyReceipt()">
                                 📄 Verify Receipt & Activate Premium
                             </button>
@@ -684,19 +687,25 @@
         }
 
         function verifyReceipt() {
-            const fileInput = document.getElementById('receipt-upload');
-            if (!fileInput.files || fileInput.files.length === 0) {
-                alert('⚠️ Please upload your receipt first!');
+            const linkInput = document.getElementById('receipt-link');
+            const receiptLink = linkInput.value.trim();
+            
+            if (!receiptLink) {
+                alert('⚠️ Please paste your receipt link first!');
                 return;
             }
             
-            const file = fileInput.files[0];
+            if (!receiptLink.startsWith('http')) {
+                alert('⚠️ Please enter a valid link starting with http or https');
+                return;
+            }
+            
             const today = new Date().toDateString();
             
             // Simulate receipt verification (in a real app, this would be server-side)
             const verificationPrompt = prompt(`Receipt Verification:
             
-Please confirm the following details from your receipt:
+Please confirm the following details from your receipt link:
 1. Amount paid: $1.99
 2. Recipient: $TVEGESD
 3. Date: ${today}
@@ -745,6 +754,23 @@ Type "VERIFIED" if all details match exactly:`);
             customTitle = newTitle;
             saveUserData();
             alert('✨ Custom title updated!');
+        }
+
+        function disableCustomTitle() {
+            if (!customTitle) {
+                alert('No custom title is currently active!');
+                return;
+            }
+            
+            if (confirm('⚠️ Are you sure you want to disable your custom title? You can create a new one anytime.')) {
+                customTitle = '';
+                const titleInput = document.getElementById('custom-title-input');
+                if (titleInput) {
+                    titleInput.value = '';
+                }
+                saveUserData();
+                alert('❌ Custom title disabled!');
+            }
         }
 
         // Shop Functions
