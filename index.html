@@ -1,126 +1,20 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Typing Battle - Infinite Levels!</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            text-align: center;
-            background-color: #f0f0f0;
-            margin-top: 50px;
-        }
-        #game-container {
-            width: 80%;
-            margin: 0 auto;
-            border: 2px solid #ccc;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        #monster-area, #player-area {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .character {
-            padding: 15px;
-            border: 1px solid #eee;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            min-width: 150px;
-        }
-        #current-word {
-            font-size: 2em;
-            margin: 20px 0;
-            color: #333;
-        }
-        #typing-input {
-            width: 70%;
-            padding: 10px;
-            font-size: 1.2em;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            outline: none;
-        }
-        #typing-input:focus {
-            border-color: #007bff;
-        }
-        .message {
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        .correct {
-            color: green;
-        }
-        .incorrect {
-            color: red;
-        }
-        .game-over {
-            color: #d9534f;
-        }
-        #level-info {
-            font-size: 1.1em;
-            margin-bottom: 15px;
-        }
-        .boss {
-            color: purple;
-            font-weight: bold;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .user-info {
-            text-align: left;
-        }
-        .nav-links {
-            text-align: right;
-        }
-        .nav-links a {
-            color: #007bff;
-            text-decoration: none;
-            margin-left: 15px;
-        }
-        .nav-links a:hover {
-            text-decoration: underline;
-        }
-        .btn {
-            background-color: #007bff;
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9em;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn:hover {
-            background-color: #0056b3;
-        }
-        .stats {
-            font-size: 0.9em;
-            color: #666;
-            margin-top: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div id="game-container">
         <div class="header">
             <div class="user-info">
                 <h2>Welcome, <span id="username"></span>!</h2>
                 <div class="stats">
-                    Best Level: <span id="best-level">0</span> | 
+                    Best Level: <span id="best-level">0</span> |
                     Games Played: <span id="games-played">0</span>
                 </div>
             </div>
@@ -146,9 +40,10 @@
         </div>
 
         <p id="current-word"></p>
+        <div id="cheat-indicator" style="display: none;">🚀 CHEAT MODE ACTIVE 🚀</div>
         <input type="text" id="typing-input" placeholder="Type the word...">
         <p id="message" class="message"></p>
-        
+
         <div style="margin-top: 20px;">
             <button class="btn" onclick="startGame()">New Game</button>
         </div>
@@ -156,7 +51,7 @@
 
     <script>
         const words = ["attack", "defend", "magic", "sword", "shield", "spell", "heal", "potion", "strike", "dodge", "ability", "spirit", "valor", "courage", "fury", "enchant", "bless", "curse", "poison", "fire", "ice", "thunder", "earth", "wind", "light", "darkness", "focus", "meditate", "charge", "parry", "slap", "tackle"];
-        const bossWords = ["destroyer", "annihilator", "overlord", "tyrant", "colossus", "behemoth", "leviathan", "abomination", "conqueror", "devastator", "ram", "tackle", "shoot", "arrow", "sword"];
+        const bossWords = ["destroyer", "annihilator", "overlord", "tyrant", "colossus", "behemoth", "leviathan", "abomination", "conqueror", "devastator", "ram", "tackle", "shoot", "arrow", "sword", "chargoggagoggmanchauggagoggchaubunagungamaugg", "dragon", "wyvern", "hydra", "golem", "beast", "fiend", "demon", "devil", "angel", "archangel", "archfiend", "archdemon", "Erythrocytapheresis", "Supercalifragilisticexpialidocious"];
 
         let currentWord = "";
         let monsterHealth = 100;
@@ -164,6 +59,8 @@
         let currentLevel = 1;
         let isBossFight = false;
         let currentUser = "";
+        let cheatMode = false;
+        let cheatInterval = null;
 
         const monsterHealthSpan = document.getElementById("monster-health");
         const playerHealthSpan = document.getElementById("player-health");
@@ -172,6 +69,7 @@
         const messageDisplay = document.getElementById("message");
         const currentLevelDisplay = document.getElementById("current-level");
         const monsterNameDisplay = document.getElementById("monster-name");
+        const cheatIndicator = document.getElementById("cheat-indicator");
 
         function checkAuth() {
             currentUser = localStorage.getItem('currentUser');
@@ -179,7 +77,7 @@
                 window.location.href = 'signup.html';
                 return false;
             }
-            
+
             document.getElementById('username').textContent = currentUser;
             loadUserStats();
             return true;
@@ -187,8 +85,8 @@
 
         function loadUserStats() {
             const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
-            const userData = users[currentUser] || { maxLevel: 0, gamesPlayed: 0 };
-            
+            const userData = users[currentUser] || {maxLevel: 0, gamesPlayed: 0};
+
             document.getElementById('best-level').textContent = userData.maxLevel;
             document.getElementById('games-played').textContent = userData.gamesPlayed;
         }
@@ -206,6 +104,48 @@
         function logout() {
             localStorage.removeItem('currentUser');
             window.location.href = 'signup.html';
+        }
+
+        function toggleCheatMode() {
+            cheatMode = !cheatMode;
+            cheatIndicator.style.display = cheatMode ? 'block' : 'none';
+
+            if (cheatMode) {
+                cheatIndicator.style.color = '#ff6b6b';
+                cheatIndicator.style.fontSize = '1.2em';
+                cheatIndicator.style.fontWeight = 'bold';
+                cheatIndicator.style.animation = 'textGlow 1s ease-in-out infinite alternate';
+                cheatIndicator.style.marginTop = '10px';
+                autoType();
+            } else {
+                clearInterval(cheatInterval);
+                cheatInterval = null;
+            }
+        }
+
+        function autoType() {
+            if (!cheatMode || typingInput.disabled) return;
+
+            const word = currentWord;
+            let index = 0;
+
+            cheatInterval = setInterval(() => {
+                if (!cheatMode || typingInput.disabled || index >= word.length) {
+                    if (index >= word.length && cheatMode) {
+                        // Simulate Enter key press
+                        const enterEvent = new KeyboardEvent('keyup', {key: 'Enter'});
+                        typingInput.dispatchEvent(enterEvent);
+                    }
+                    clearInterval(cheatInterval);
+                    if (cheatMode && monsterHealth > 0 && !typingInput.disabled) {
+                        setTimeout(autoType, 100); // Start typing next word
+                    }
+                    return;
+                }
+
+                typingInput.value = word.substring(0, index + 1);
+                index++;
+            }, 50); // Type each character every 50ms
         }
 
         function startGame() {
@@ -313,6 +253,14 @@
             updateUserStats(currentLevel - 1);
         }
 
+        // Global keyboard listener for cheat activation
+        document.addEventListener("keydown", (event) => {
+            if (event.ctrlKey && event.altKey && event.key === 'c') {
+                event.preventDefault();
+                toggleCheatMode();
+            }
+        });
+
         typingInput.addEventListener("keyup", (event) => {
             if (typingInput.disabled) return;
 
@@ -321,6 +269,9 @@
                     attack("monster");
                     if (monsterHealth > 0) {
                         newWord();
+                        if (cheatMode) {
+                            setTimeout(autoType, 100);
+                        }
                     }
                 } else {
                     messageDisplay.textContent = "Incorrect word! Monster attacks!";
@@ -328,6 +279,9 @@
                     messageDisplay.classList.remove("correct");
                     attack("player");
                     newWord();
+                    if (cheatMode) {
+                        setTimeout(autoType, 100);
+                    }
                 }
                 typingInput.value = "";
             }
@@ -339,4 +293,5 @@
         }
     </script>
 </body>
+
 </html>
