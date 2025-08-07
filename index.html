@@ -90,6 +90,7 @@
             <div class="shop-tabs">
                 <button class="tab-btn active" onclick="showTab('titles')">🏅 Titles</button>
                 <button class="tab-btn" onclick="showTab('perks')">⚡ Perks</button>
+                <button class="tab-btn" onclick="showTab('creator')" id="creator-tab-btn" style="display: none;">🎬 Content Creator</button>
             </div>
 
             <div id="titles-tab" class="shop-tab active">
@@ -280,6 +281,16 @@
                             <button onclick="buyItem('perk', 'gemBonus', 1200)" class="buy-btn">Buy</button>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div id="creator-tab" class="shop-tab">
+                <h3>🎬 Content Creator Management</h3>
+                <p style="text-align: center; color: #636e72; margin-bottom: 20px;">
+                    Manage your exclusive Content Creator titles here
+                </p>
+                <div id="creator-titles-container">
+                    <!-- Creator titles will be populated by JavaScript -->
                 </div>
             </div>
         </div>
@@ -1032,6 +1043,9 @@ Type "VERIFIED" if all details match exactly:`);
             // Update gems display
             document.getElementById('gems-count').textContent = gems;
             document.getElementById('shop-gems').textContent = gems;
+            
+            // Check if user has YouTuber titles and show/hide Creator tab
+            updateCreatorTab();
 
             // Get user's owned titles
             const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
@@ -1137,6 +1151,88 @@ Type "VERIFIED" if all details match exactly:`);
                 'godslayer': '#c0392b'
             };
             return colors[title] || '#333';
+        }
+
+        function updateCreatorTab() {
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            const userData = users[currentUser] || {};
+            const userYoutuberTitles = userData.youtuberTitles || [];
+            
+            const creatorTabBtn = document.getElementById('creator-tab-btn');
+            const creatorContainer = document.getElementById('creator-titles-container');
+            
+            if (userYoutuberTitles.length > 0) {
+                // Show the Creator tab
+                creatorTabBtn.style.display = 'inline-block';
+                
+                // Populate creator titles
+                const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
+                let creatorHTML = '';
+                
+                userYoutuberTitles.forEach(titleId => {
+                    const titleData = youtuberTitles[titleId];
+                    if (titleData) {
+                        creatorHTML += `
+                            <div class="shop-item" style="background: linear-gradient(145deg, #fff5f5, #ffe8e8); border: 2px solid #ff4757;">
+                                <div class="item-info">
+                                    <h4 style="color: #ff4757;">🎬 ${titleData.name}</h4>
+                                    <p style="color: #666;">Exclusive Content Creator Title</p>
+                                    <small style="color: #999;">Created: ${new Date(titleData.createdAt).toLocaleDateString()}</small>
+                                </div>
+                                <div class="item-price">
+                                    <button onclick="disableYoutuberTitle('${titleId}')" class="btn" style="background: linear-gradient(45deg, #ff4757, #ff3838); color: white; padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer; font-weight: bold;">
+                                        ❌ Disable Title
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                if (creatorHTML === '') {
+                    creatorHTML = '<p style="text-align: center; color: #636e72; font-style: italic;">No Content Creator titles available.</p>';
+                }
+                
+                creatorContainer.innerHTML = creatorHTML;
+            } else {
+                // Hide the Creator tab
+                creatorTabBtn.style.display = 'none';
+                creatorContainer.innerHTML = '<p style="text-align: center; color: #636e72; font-style: italic;">No Content Creator titles available.</p>';
+            }
+        }
+
+        function disableYoutuberTitle(titleId) {
+            const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
+            const titleData = youtuberTitles[titleId];
+            
+            if (!titleData) {
+                alert('Title not found!');
+                return;
+            }
+            
+            if (confirm(`⚠️ Are you sure you want to disable your "${titleData.name}" Content Creator title?\n\nThis will remove it from your account permanently. You cannot re-enable it yourself.`)) {
+                const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+                const userData = users[currentUser] || {};
+                
+                // Remove title from user's YouTuber titles
+                if (userData.youtuberTitles) {
+                    userData.youtuberTitles = userData.youtuberTitles.filter(id => id !== titleId);
+                    users[currentUser] = userData;
+                    localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+                }
+                
+                // Remove user from title's assigned list
+                if (titleData.assignedTo) {
+                    titleData.assignedTo = titleData.assignedTo.filter(username => username !== currentUser);
+                    localStorage.setItem('youtuberTitles', JSON.stringify(youtuberTitles));
+                }
+                
+                // Refresh user stats and creator tab
+                loadUserStats();
+                updateCreatorTab();
+                
+                alert(`❌ Content Creator title "${titleData.name}" has been disabled and removed from your account.`);
+            }
         }
 
         // Admin Panel Functions
