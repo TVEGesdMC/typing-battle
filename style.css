@@ -597,6 +597,28 @@ h1 {
     font-style: italic;
 }
 
+.youtuber-title {
+    color: #ff4757;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    background: linear-gradient(45deg, #ff4757, #ff3838);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: bold;
+    animation: youtuberGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes youtuberGlow {
+    0% { 
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        transform: scale(1);
+    }
+    100% { 
+        text-shadow: 0 0 10px rgba(255, 71, 87, 0.8);
+        transform: scale(1.05);
+    }
+}
+
 .premium-only {
     position: relative;
 }
@@ -777,6 +799,61 @@ h1 {
 .admin-status p {
     margin: 8px 0;
     font-size: 0.9em;
+}
+
+.youtuber-controls, .youtuber-assign {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.user-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.user-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.admin-list {
+    max-height: 200px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.admin-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.8em;
+}
+
+.youtuber-title {
+    color: #ff4757;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    background: linear-gradient(45deg, #ff4757, #ff3838);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: bold;
 }
 
 /* Global Announcements */
