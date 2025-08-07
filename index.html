@@ -364,14 +364,20 @@
                     <div class="user-controls">
                         <input type="text" id="target-username" class="admin-input" placeholder="Target username...">
                         <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-                            <button class="btn" style="background: linear-gradient(45deg, #e74c3c, #c0392b);" onclick="banUser()">🚫 Ban User</button>
+                            <button class="btn" style="background: linear-gradient(45deg, #e74c3c, #c0392b);" onclick="banUser()">🚫 Ban User (With Time & Reason)</button>
                             <button class="btn" style="background: linear-gradient(45deg, #f39c12, #e67e22);" onclick="unbanUser()">✅ Unban User</button>
                             <button class="btn" style="background: linear-gradient(45deg, #8e44ad, #9b59b6);" onclick="resetUserProgress()">🔄 Reset Progress</button>
                             <button class="btn" style="background: linear-gradient(45deg, #2c3e50, #34495e);" onclick="terminateAccount()">💀 Terminate Account</button>
                         </div>
+                        <div style="margin-top: 10px; padding: 10px; background: rgba(231, 76, 60, 0.1); border-radius: 5px; font-size: 0.9em; color: #e74c3c;">
+                            <strong>Ban Instructions:</strong><br>
+                            • Enter hours for ban duration<br>
+                            • Use 99999999 for indefinite ban<br>
+                            • Reason will be shown to banned user
+                        </div>
                     </div>
                     <div class="user-actions" style="margin-top: 15px;">
-                        <button class="btn btn-secondary" onclick="viewUserDetails()">👤 View User Details</button>
+                        <button class="btn btn-secondary" onclick="viewUserDetails()">👤 View User Details (Shows Ban Info)</button>
                         <button class="btn btn-secondary" onclick="giveGems()">💎 Give Gems</button>
                         <button class="btn btn-secondary" onclick="takeGems()">💸 Take Gems</button>
                         <button class="btn btn-secondary" onclick="grantPremium()">⭐ Grant Premium</button>
@@ -470,10 +476,21 @@
             // Check if user is banned
             const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
             if (users[currentUser] && users[currentUser].banned) {
-                alert('🚫 Your account has been banned. Contact an administrator for more information.');
-                localStorage.removeItem('currentUser');
-                window.location.href = 'signup.html';
-                return false;
+                const banData = users[currentUser].banData || {};
+                const banEndTime = banData.endTime;
+                const currentTime = Date.now();
+                
+                // Check if ban has expired
+                if (banEndTime && currentTime >= banEndTime) {
+                    // Unban the user automatically
+                    delete users[currentUser].banned;
+                    delete users[currentUser].banData;
+                    localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+                } else {
+                    // Show ban screen
+                    showBanScreen(banData);
+                    return false;
+                }
             }
 
             document.getElementById('username').textContent = currentUser;
@@ -1496,14 +1513,38 @@ Type "VERIFIED" if all details match exactly:`);
                 return;
             }
             
+            // Get ban duration and reason
+            const durationInput = prompt('Enter ban duration in hours (enter 99999999 for indefinite ban):');
+            if (durationInput === null) return; // User cancelled
+            
+            const duration = parseInt(durationInput);
+            if (isNaN(duration) || duration < 0) {
+                alert('Please enter a valid number of hours!');
+                return;
+            }
+            
+            const reason = prompt('Enter ban reason:') || 'No reason provided';
+            
+            const currentTime = Date.now();
+            const banEndTime = duration === 99999999 ? null : currentTime + (duration * 60 * 60 * 1000);
+            
             users[username].banned = true;
-            users[username].bannedBy = currentUser;
-            users[username].bannedAt = new Date().toISOString();
+            users[username].banData = {
+                bannedBy: currentUser,
+                bannedAt: new Date().toISOString(),
+                duration: duration,
+                endTime: banEndTime,
+                reason: reason
+            };
             
             localStorage.setItem('typingBattleUsers', JSON.stringify(users));
             targetInput.value = '';
             
-            alert(`🚫 User "${username}" has been banned!`);
+            if (duration === 99999999) {
+                alert(`🚫 User "${username}" has been banned indefinitely!\nReason: ${reason}`);
+            } else {
+                alert(`🚫 User "${username}" has been banned for ${duration} hours!\nReason: ${reason}`);
+            }
             refreshStats();
         }
 
@@ -1522,9 +1563,13 @@ Type "VERIFIED" if all details match exactly:`);
                 return;
             }
             
+            if (!users[username].banned) {
+                alert('User is not currently banned!');
+                return;
+            }
+            
             delete users[username].banned;
-            delete users[username].bannedBy;
-            delete users[username].bannedAt;
+            delete users[username].banData;
             
             localStorage.setItem('typingBattleUsers', JSON.stringify(users));
             targetInput.value = '';
@@ -1622,6 +1667,30 @@ Type "VERIFIED" if all details match exactly:`);
             details += `Premium: ${user.isPremium ? 'Yes' : 'No'}\n`;
             details += `Custom Title: ${user.customTitle || 'None'}\n`;
             details += `Banned: ${user.banned ? 'Yes' : 'No'}\n`;
+            
+            if (user.banned && user.banData) {
+                const banData = user.banData;
+                details += `Ban Reason: ${banData.reason || 'No reason provided'}\n`;
+                details += `Banned By: ${banData.bannedBy || 'Unknown'}\n`;
+                details += `Banned At: ${banData.bannedAt || 'Unknown'}\n`;
+                
+                if (banData.duration === 99999999) {
+                    details += `Ban Duration: Indefinite\n`;
+                } else {
+                    details += `Ban Duration: ${banData.duration} hours\n`;
+                    if (banData.endTime) {
+                        const timeLeft = banData.endTime - Date.now();
+                        if (timeLeft > 0) {
+                            const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
+                            const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                            details += `Time Remaining: ${hoursLeft}h ${minutesLeft}m\n`;
+                        } else {
+                            details += `Time Remaining: Expired (should auto-unban)\n`;
+                        }
+                    }
+                }
+            }
+            
             details += `Created: ${user.createdAt || 'Unknown'}\n`;
             
             if (user.youtuberTitles && user.youtuberTitles.length > 0) {
@@ -2111,6 +2180,103 @@ Type "VERIFIED" if all details match exactly:`);
                     document.body.style.animation = 'discoShake 0.1s ease-in-out infinite';
                 }
             }, 100);
+        }
+
+        function showBanScreen(banData) {
+            // Hide all game content
+            document.getElementById('game-container').style.display = 'none';
+            
+            // Create ban screen
+            const banScreen = document.createElement('div');
+            banScreen.id = 'ban-screen';
+            banScreen.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                background: linear-gradient(135deg, #2d3436, #636e72);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                color: white;
+                font-family: Arial, sans-serif;
+            `;
+            
+            const banContent = document.createElement('div');
+            banContent.style.cssText = `
+                background: linear-gradient(145deg, #e74c3c, #c0392b);
+                padding: 40px;
+                border-radius: 20px;
+                text-align: center;
+                max-width: 500px;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+                border: 3px solid #a51e1e;
+            `;
+            
+            const banEndTime = banData.endTime;
+            const currentTime = Date.now();
+            const timeRemaining = banEndTime - currentTime;
+            
+            let timeMessage = '';
+            if (banData.duration === 99999999) {
+                timeMessage = '<p style="font-size: 1.2em; color: #fff; margin: 20px 0;">⏰ This account is banned <strong>indefinitely</strong></p>';
+            } else if (timeRemaining > 0) {
+                const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+                const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+                timeMessage = `<p style="font-size: 1.2em; color: #fff; margin: 20px 0;">⏰ Time remaining: <strong>${hours}h ${minutes}m ${seconds}s</strong></p>`;
+            }
+            
+            const reason = banData.reason || 'No reason provided';
+            
+            banContent.innerHTML = `
+                <div style="font-size: 4em; margin-bottom: 20px;">🚫</div>
+                <h1 style="color: #fff; margin: 0 0 20px 0; font-size: 2.5em;">ACCOUNT BANNED</h1>
+                <p style="font-size: 1.3em; color: #fff; margin: 20px 0;">Your account has been suspended</p>
+                ${timeMessage}
+                <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; margin: 20px 0;">
+                    <p style="color: #fff; margin: 0; font-weight: bold;">Reason:</p>
+                    <p style="color: #ffeb3b; margin: 10px 0 0 0; font-size: 1.1em;">${reason}</p>
+                </div>
+                <p style="color: #fff; margin-top: 30px; font-size: 0.9em;">Contact an administrator if you believe this is an error</p>
+                <button onclick="location.reload()" style="
+                    background: linear-gradient(45deg, #74b9ff, #0984e3);
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 25px;
+                    font-size: 1em;
+                    cursor: pointer;
+                    margin-top: 20px;
+                ">🔄 Check Ban Status</button>
+            `;
+            
+            banScreen.appendChild(banContent);
+            document.body.appendChild(banScreen);
+            
+            // Update countdown timer if not indefinite ban
+            if (banData.duration !== 99999999 && timeRemaining > 0) {
+                const countdownInterval = setInterval(() => {
+                    const currentTime = Date.now();
+                    const timeLeft = banEndTime - currentTime;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(countdownInterval);
+                        location.reload(); // Refresh to check if ban expired
+                    } else {
+                        const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                        
+                        const timeElement = banContent.querySelector('p strong');
+                        if (timeElement && timeElement.textContent.includes('h')) {
+                            timeElement.textContent = `${hours}h ${minutes}m ${seconds}s`;
+                        }
+                    }
+                }, 1000);
+            }
         }
 
         // Initialize the game
