@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Typing Battle - Infinite Levels!</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -334,6 +335,7 @@
                             <option value="speed-boost">⚡ Speed Boost Event</option>
                             <option value="mega-damage">💪 Mega Damage Event</option>
                             <option value="boss-rush">👹 Boss Rush Event</option>
+                            <option value="admin-abuse">🎪 ADMIN ABUSE Event</option>
                         </select>
                         <input type="number" id="event-duration" class="admin-input" placeholder="Duration (minutes)" min="1" max="60" value="10">
                         <button class="btn admin-action-btn" onclick="startGlobalEvent()">🎯 Start Event</button>
@@ -388,11 +390,22 @@
                 </div>
                 
                 <div class="admin-section">
+                    <h3>🎨 Visual Effects</h3>
+                    <div class="event-controls">
+                        <button class="btn admin-action-btn" onclick="toggleDiscoMode()">🕺 Toggle Disco Mode</button>
+                        <button class="btn admin-action-btn" onclick="toggleShakeMode()">📳 Toggle Shake Mode</button>
+                        <button class="btn admin-action-btn" onclick="toggleRainbowMode()">🌈 Toggle Rainbow Mode</button>
+                        <button class="btn admin-action-btn" onclick="stopAllEffects()">🛑 Stop All Effects</button>
+                    </div>
+                </div>
+                
+                <div class="admin-section">
                     <h3>📊 Current Status</h3>
                     <div class="admin-status">
                         <p><strong>Active Event:</strong> <span id="current-event-status">None</span></p>
                         <p><strong>Time Remaining:</strong> <span id="event-time-remaining">-</span></p>
                         <p><strong>Last Announcement:</strong> <span id="last-announcement">None</span></p>
+                        <p><strong>Visual Effects:</strong> <span id="visual-effects-status">None</span></p>
                     </div>
                 </div>
             </div>
@@ -402,6 +415,7 @@
     <script>
         const words = ["attack", "defend", "magic", "sword", "shield", "spell", "heal", "potion", "strike", "dodge", "ability", "spirit", "valor", "courage", "fury", "enchant", "bless", "curse", "poison", "fire", "ice", "thunder", "earth", "wind", "light", "darkness", "focus", "meditate", "charge", "parry", "slap", "tackle"];
         const bossWords = ["destroyer", "annihilator", "overlord", "tyrant", "colossus", "behemoth", "leviathan", "abomination", "conqueror", "devastator", "ram", "tackle", "shoot", "arrow", "sword", "chargoggagoggmanchauggagoggchaubunagungamaugg", "dragon", "wyvern", "hydra", "golem", "beast", "fiend", "demon", "devil", "angel", "archangel", "archfiend", "archdemon", "Erythrocytapheresis", "Supercalifragilisticexpialidocious"];
+        const impossibleWords = ["pneumonoultramicroscopicsilicovolcanoconiosispneumonoultramicroscopicsilicovolcanoconiosis", "floccinaucinihilipilificationfloccinaucinihilipilificationfloccinaucinihilipilification", "antidisestablishmentarianismantidisestablishmentarianismantidisestablishmentarianism", "supercalifragilisticexpialidocioussupercalifragilisticexpialidocioussupercalifragilisticexpialidocious", "hippopotomonstrosesquippedaliophobiahippopotomonstrosesquippedaliophobia", "pseudopseudohypoparathyroidismpseudopseudohypoparathyroidism", "chargoggagoggmanchauggagoggchaubunagungamauggchargoggagoggmanchauggagoggchaubunagungamaugg"];
 
         let currentWord = "";
         let monsterHealth = 100;
@@ -427,6 +441,15 @@
         let globalEvent = null;
         let eventEndTime = null;
         let eventCheckInterval = null;
+        let deathTimer = null;
+        let deathTimeRemaining = 0;
+        let isAdminAbuseActive = false;
+        
+        // Visual effects
+        let discoMode = false;
+        let shakeMode = false;
+        let rainbowMode = false;
+        let visualEffectsInterval = null;
 
         const monsterHealthSpan = document.getElementById("monster-health");
         const playerHealthSpan = document.getElementById("player-health");
@@ -500,14 +523,14 @@
             document.getElementById('gems-count').textContent = gems;
             document.getElementById('shop-gems').textContent = gems;
             
-            // Update title display - check YouTuber titles first
+            // Update title display - check active YouTuber title first
             const titleElement = document.getElementById('player-title');
             const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
-            const userYoutuberTitles = userData.youtuberTitles || [];
+            const activeYoutuberTitle = userData.activeYoutuberTitle;
             
-            if (userYoutuberTitles.length > 0 && youtuberTitles[userYoutuberTitles[0]]) {
-                // Show first YouTuber title (highest priority)
-                const youtuberTitle = youtuberTitles[userYoutuberTitles[0]];
+            if (activeYoutuberTitle && youtuberTitles[activeYoutuberTitle]) {
+                // Show active YouTuber title (highest priority)
+                const youtuberTitle = youtuberTitles[activeYoutuberTitle];
                 titleElement.innerHTML = `🎬 ${youtuberTitle.name} `;
                 titleElement.style.color = '#ff4757';
                 titleElement.style.textShadow = '2px 2px 4px rgba(0,0,0,0.3)';
@@ -654,10 +677,29 @@
         }
 
         function newWord() {
-            let wordList = isBossFight ? bossWords : words;
+            let wordList = words;
+            
+            // Check for ADMIN ABUSE event
+            if (globalEvent && globalEvent.type === 'admin-abuse') {
+                wordList = impossibleWords;
+                isAdminAbuseActive = true;
+            } else if (isBossFight) {
+                wordList = bossWords;
+                isAdminAbuseActive = false;
+            } else {
+                isAdminAbuseActive = false;
+            }
+            
             const randomIndex = Math.floor(Math.random() * wordList.length);
             currentWord = wordList[randomIndex];
             currentWordDisplay.textContent = currentWord;
+            
+            // Start death timer for ADMIN ABUSE event
+            if (isAdminAbuseActive) {
+                startDeathTimer();
+            } else {
+                clearDeathTimer();
+            }
             
             // If cheat mode is active, automatically start typing the new word
             if (cheatMode && !typingInput.disabled) {
@@ -1165,10 +1207,8 @@ Type "VERIFIED" if all details match exactly:`);
                 // Show the Creator tab
                 creatorTabBtn.style.display = 'inline-block';
                 
-                // Check if user is currently using a YouTuber title
-                const currentlyEquippedYoutuberTitle = userYoutuberTitles.length > 0 ? userYoutuberTitles[0] : null;
-                const isYoutuberTitleActive = currentlyEquippedYoutuberTitle && 
-                    (!playerTitle || playerTitle === '' || !isPremium || !customTitle);
+                // Check which YouTuber title is currently active
+                const currentlyEquippedYoutuberTitle = userData.activeYoutuberTitle || null;
                 
                 // Populate creator titles
                 const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
@@ -1181,7 +1221,7 @@ Type "VERIFIED" if all details match exactly:`);
                 userYoutuberTitles.forEach(titleId => {
                     const titleData = youtuberTitles[titleId];
                     if (titleData) {
-                        const isCurrentlyEquipped = titleId === currentlyEquippedYoutuberTitle && isYoutuberTitleActive;
+                        const isCurrentlyEquipped = titleId === currentlyEquippedYoutuberTitle;
                         
                         creatorHTML += `
                             <div class="shop-item" style="background: linear-gradient(145deg, #fff5f5, #ffe8e8); border: 2px solid #ff4757;">
@@ -1227,8 +1267,8 @@ Type "VERIFIED" if all details match exactly:`);
                 return;
             }
             
-            // Move the selected title to the front of the array (highest priority)
-            userData.youtuberTitles = [titleId, ...userYoutuberTitles.filter(id => id !== titleId)];
+            // Set active YouTuber title
+            userData.activeYoutuberTitle = titleId;
             users[currentUser] = userData;
             localStorage.setItem('typingBattleUsers', JSON.stringify(users));
             
@@ -1236,6 +1276,7 @@ Type "VERIFIED" if all details match exactly:`);
             playerTitle = '';
             customTitle = '';
             saveUserData();
+            loadUserStats();
             
             const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
             const titleData = youtuberTitles[titleId];
@@ -1247,26 +1288,22 @@ Type "VERIFIED" if all details match exactly:`);
         function unequipYoutuberTitle() {
             const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
             const userData = users[currentUser] || {};
-            const userYoutuberTitles = userData.youtuberTitles || [];
             
-            if (userYoutuberTitles.length === 0) {
+            if (!userData.activeYoutuberTitle) {
                 alert('No Content Creator title is currently equipped!');
                 return;
             }
             
-            // Check if a YouTuber title is actually being displayed
-            const isYoutuberTitleActive = userYoutuberTitles.length > 0 && 
-                (!playerTitle || playerTitle === '' || !isPremium || !customTitle);
+            // Remove active YouTuber title
+            userData.activeYoutuberTitle = null;
+            delete userData.activeYoutuberTitle;
+            users[currentUser] = userData;
+            localStorage.setItem('typingBattleUsers', JSON.stringify(users));
             
-            if (!isYoutuberTitleActive) {
-                alert('No Content Creator title is currently active!');
-                return;
-            }
-            
-            // Don't remove from array, just allow other titles to take precedence
-            // User can re-equip by clicking the equip button
+            // Refresh user stats and creator tab
             loadUserStats();
             updateCreatorTab();
+            updateShopButtons();
             alert('❌ Content Creator title unequipped! You can re-equip it anytime.');
         }
 
@@ -1737,6 +1774,25 @@ Type "VERIFIED" if all details match exactly:`);
                 duration: duration
             };
             
+            // Special handling for ADMIN ABUSE event
+            if (eventType === 'admin-abuse') {
+                // Give 50k gems to all active users and multiply current gems by 1000
+                const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+                for (const username in users) {
+                    if (!users[username].banned) {
+                        users[username].gems = (users[username].gems || 0) * 1000 + 50000;
+                    }
+                }
+                localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+                
+                // Update current user's gems display
+                gems = gems * 1000 + 50000;
+                saveUserData();
+                
+                // Activate disco mode automatically
+                toggleDiscoMode();
+            }
+            
             localStorage.setItem('globalEvent', JSON.stringify(eventData));
             globalEvent = eventData;
             eventEndTime = eventData.endTime;
@@ -1749,7 +1805,8 @@ Type "VERIFIED" if all details match exactly:`);
                 'triple-gems': '💎 Triple Gems Event',
                 'speed-boost': '⚡ Speed Boost Event',
                 'mega-damage': '💪 Mega Damage Event',
-                'boss-rush': '👹 Boss Rush Event'
+                'boss-rush': '👹 Boss Rush Event',
+                'admin-abuse': '🎪 ADMIN ABUSE Event'
             };
             
             alert(`🎯 ${eventNames[eventType]} started for ${duration} minutes!`);
@@ -1786,13 +1843,15 @@ Type "VERIFIED" if all details match exactly:`);
                 }
             }
             
-            // Check for active announcements
+            // Check for active announcements (only show if not seen by this user)
             const savedAnnouncement = localStorage.getItem('globalAnnouncement');
             if (savedAnnouncement) {
                 const announcementData = JSON.parse(savedAnnouncement);
-                if (announcementData.expires > Date.now()) {
+                const seenAnnouncements = JSON.parse(localStorage.getItem(`seenAnnouncements_${currentUser}`) || '[]');
+                
+                if (announcementData.expires > Date.now() && !seenAnnouncements.includes(announcementData.timestamp)) {
                     showGlobalAnnouncement(announcementData);
-                } else {
+                } else if (announcementData.expires <= Date.now()) {
                     localStorage.removeItem('globalAnnouncement');
                 }
             }
@@ -1810,7 +1869,8 @@ Type "VERIFIED" if all details match exactly:`);
                 'triple-gems': 'Triple Gems Active!',
                 'speed-boost': 'Speed Boost Active!',
                 'mega-damage': 'Mega Damage Active!',
-                'boss-rush': 'Boss Rush Active!'
+                'boss-rush': 'Boss Rush Active!',
+                'admin-abuse': 'ADMIN ABUSE ACTIVE!'
             };
             
             const eventColors = {
@@ -1818,7 +1878,8 @@ Type "VERIFIED" if all details match exactly:`);
                 'triple-gems': '#e17055',
                 'speed-boost': '#74b9ff',
                 'mega-damage': '#ff6b6b',
-                'boss-rush': '#8e44ad'
+                'boss-rush': '#8e44ad',
+                'admin-abuse': '#ff1744'
             };
             
             eventText.textContent = eventNames[globalEvent.type] || 'Special Event Active!';
@@ -1833,7 +1894,8 @@ Type "VERIFIED" if all details match exactly:`);
                 'triple-gems': '3x Gems',
                 'speed-boost': 'Faster Typing',
                 'mega-damage': '3x Damage',
-                'boss-rush': 'All Bosses'
+                'boss-rush': 'All Bosses',
+                'admin-abuse': 'CHAOS MODE'
             };
             return multipliers[eventType] || 'Special Effect';
         }
@@ -1849,6 +1911,17 @@ Type "VERIFIED" if all details match exactly:`);
         }
 
         function closeAnnouncement() {
+            const savedAnnouncement = localStorage.getItem('globalAnnouncement');
+            if (savedAnnouncement) {
+                const announcementData = JSON.parse(savedAnnouncement);
+                const seenAnnouncements = JSON.parse(localStorage.getItem(`seenAnnouncements_${currentUser}`) || '[]');
+                
+                if (!seenAnnouncements.includes(announcementData.timestamp)) {
+                    seenAnnouncements.push(announcementData.timestamp);
+                    localStorage.setItem(`seenAnnouncements_${currentUser}`, JSON.stringify(seenAnnouncements));
+                }
+            }
+            
             document.getElementById('global-announcements').style.display = 'none';
         }
 
@@ -1884,6 +1957,7 @@ Type "VERIFIED" if all details match exactly:`);
             const currentEventStatus = document.getElementById('current-event-status');
             const eventTimeRemaining = document.getElementById('event-time-remaining');
             const lastAnnouncement = document.getElementById('last-announcement');
+            const visualEffectsStatus = document.getElementById('visual-effects-status');
             
             if (globalEvent) {
                 const eventNames = {
@@ -1891,7 +1965,8 @@ Type "VERIFIED" if all details match exactly:`);
                     'triple-gems': '💎 Triple Gems',
                     'speed-boost': '⚡ Speed Boost',
                     'mega-damage': '💪 Mega Damage',
-                    'boss-rush': '👹 Boss Rush'
+                    'boss-rush': '👹 Boss Rush',
+                    'admin-abuse': '🎪 ADMIN ABUSE'
                 };
                 currentEventStatus.textContent = eventNames[globalEvent.type] || 'Unknown Event';
             } else {
@@ -1906,6 +1981,136 @@ Type "VERIFIED" if all details match exactly:`);
             } else {
                 lastAnnouncement.textContent = 'None';
             }
+            
+            // Update visual effects status
+            const activeEffects = [];
+            if (discoMode) activeEffects.push('Disco');
+            if (shakeMode) activeEffects.push('Shake');
+            if (rainbowMode) activeEffects.push('Rainbow');
+            
+            visualEffectsStatus.textContent = activeEffects.length > 0 ? activeEffects.join(', ') : 'None';
+        }
+
+        // Death Timer Functions
+        function startDeathTimer() {
+            clearDeathTimer();
+            deathTimeRemaining = 10; // 10 seconds to type impossible words
+            
+            // Create death timer display
+            let timerDisplay = document.getElementById('death-timer');
+            if (!timerDisplay) {
+                timerDisplay = document.createElement('div');
+                timerDisplay.id = 'death-timer';
+                timerDisplay.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: linear-gradient(45deg, #ff1744, #d50000);
+                    color: white;
+                    padding: 20px;
+                    border-radius: 15px;
+                    font-size: 2em;
+                    font-weight: bold;
+                    z-index: 10000;
+                    text-align: center;
+                    box-shadow: 0 0 30px rgba(255, 23, 68, 0.8);
+                    animation: deathPulse 1s ease-in-out infinite;
+                `;
+                document.body.appendChild(timerDisplay);
+            }
+            
+            deathTimer = setInterval(() => {
+                deathTimeRemaining--;
+                timerDisplay.textContent = `💀 TYPE OR DIE: ${deathTimeRemaining}s 💀`;
+                
+                if (deathTimeRemaining <= 0) {
+                    clearDeathTimer();
+                    endGame("💀 TIME'S UP! YOU DIED! 💀");
+                }
+            }, 1000);
+        }
+        
+        function clearDeathTimer() {
+            if (deathTimer) {
+                clearInterval(deathTimer);
+                deathTimer = null;
+            }
+            
+            const timerDisplay = document.getElementById('death-timer');
+            if (timerDisplay) {
+                timerDisplay.remove();
+            }
+        }
+        
+        // Visual Effects Functions
+        function toggleDiscoMode() {
+            discoMode = !discoMode;
+            
+            if (discoMode) {
+                document.body.style.animation = 'discoColors 0.2s ease-in-out infinite';
+                startVisualEffects();
+            } else {
+                document.body.style.animation = 'backgroundShift 10s ease-in-out infinite alternate';
+            }
+            
+            updateAdminStatus();
+        }
+        
+        function toggleShakeMode() {
+            shakeMode = !shakeMode;
+            
+            if (shakeMode) {
+                document.body.style.animation = 'shake 0.1s ease-in-out infinite';
+                startVisualEffects();
+            } else {
+                document.body.style.animation = discoMode ? 'discoColors 0.2s ease-in-out infinite' : 'backgroundShift 10s ease-in-out infinite alternate';
+            }
+            
+            updateAdminStatus();
+        }
+        
+        function toggleRainbowMode() {
+            rainbowMode = !rainbowMode;
+            
+            if (rainbowMode) {
+                document.getElementById('game-container').style.animation = 'rainbowBorder 1s ease-in-out infinite';
+                startVisualEffects();
+            } else {
+                document.getElementById('game-container').style.animation = 'none';
+            }
+            
+            updateAdminStatus();
+        }
+        
+        function stopAllEffects() {
+            discoMode = false;
+            shakeMode = false;
+            rainbowMode = false;
+            
+            document.body.style.animation = 'backgroundShift 10s ease-in-out infinite alternate';
+            document.getElementById('game-container').style.animation = 'none';
+            
+            if (visualEffectsInterval) {
+                clearInterval(visualEffectsInterval);
+                visualEffectsInterval = null;
+            }
+            
+            updateAdminStatus();
+        }
+        
+        function startVisualEffects() {
+            if (visualEffectsInterval) return;
+            
+            visualEffectsInterval = setInterval(() => {
+                if (discoMode && !shakeMode) {
+                    document.body.style.animation = 'discoColors 0.2s ease-in-out infinite';
+                } else if (shakeMode && !discoMode) {
+                    document.body.style.animation = 'shake 0.1s ease-in-out infinite';
+                } else if (discoMode && shakeMode) {
+                    document.body.style.animation = 'discoShake 0.1s ease-in-out infinite';
+                }
+            }, 100);
         }
 
         // Initialize the game
