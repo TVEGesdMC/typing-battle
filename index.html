@@ -466,107 +466,117 @@
         const monsterNameDisplay = document.getElementById("monster-name");
         const cheatIndicator = document.getElementById("cheat-indicator");
 
-        function checkAuth() {
+        async function checkAuth() {
             currentUser = localStorage.getItem('currentUser');
             if (!currentUser) {
                 window.location.href = 'signup.html';
                 return false;
             }
 
-            // Check if user is banned
-            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
-            if (users[currentUser] && users[currentUser].banned) {
-                const banData = users[currentUser].banData || {};
-                const banEndTime = banData.endTime;
-                const currentTime = Date.now();
+            try {
+                const response = await fetch(`/api/user/${currentUser}`);
+                const data = await response.json();
                 
-                // Check if ban has expired
-                if (banEndTime && currentTime >= banEndTime) {
-                    // Unban the user automatically
-                    delete users[currentUser].banned;
-                    delete users[currentUser].banData;
-                    localStorage.setItem('typingBattleUsers', JSON.stringify(users));
-                } else {
-                    // Show ban screen
-                    showBanScreen(banData);
+                if (!data.success) {
+                    localStorage.removeItem('currentUser');
+                    window.location.href = 'signup.html';
                     return false;
                 }
-            }
 
-            document.getElementById('username').textContent = currentUser;
-            loadUserStats();
-            
-            // Show admin panel for special user
-            if (currentUser === 'TVEGesdreal') {
-                document.getElementById('admin-btn').style.display = 'inline-block';
+                // Check if user is banned
+                if (data.userData.banned) {
+                    const banData = data.userData.banData || {};
+                    const banEndTime = banData.endTime;
+                    const currentTime = Date.now();
+                    
+                    // Check if ban has expired
+                    if (banEndTime && currentTime >= banEndTime) {
+                        // Ban expired, continue normally
+                        document.getElementById('username').textContent = currentUser;
+                        loadUserStats();
+                    } else {
+                        // Show ban screen
+                        showBanScreen(banData);
+                        return false;
+                    }
+                } else {
+                    document.getElementById('username').textContent = currentUser;
+                    loadUserStats();
+                }
+                
+                // Show admin panel for special user
+                if (currentUser === 'TVEGesdreal') {
+                    document.getElementById('admin-btn').style.display = 'inline-block';
+                }
+                
+                // Check for active global events
+                checkGlobalEvents();
+                
+                return true;
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                localStorage.removeItem('currentUser');
+                window.location.href = 'signup.html';
+                return false;
             }
-            
-            // Check for active global events
-            checkGlobalEvents();
-            
-            return true;
         }
 
-        function loadUserStats() {
-            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
-            const userData = users[currentUser] || {maxLevel: 0, gamesPlayed: 0, gems: 0, title: '', perks: {}, isPremium: false, customTitle: '', ownedTitles: []};
-
-            gems = userData.gems || 0;
-            playerTitle = userData.title || '';
-            isPremium = userData.isPremium || false;
-            
-            // Auto-activate premium for special username
-            if (currentUser === 'TVEGesdreal' && !isPremium) {
-                isPremium = true;
-                userData.isPremium = true;
-                users[currentUser] = userData;
-                localStorage.setItem('typingBattleUsers', JSON.stringify(users));
-            }
-            customTitle = userData.customTitle || '';
-            playerPerks = userData.perks || {doubleDamage: false, extraHealth: false, fastTyping: false, gemBonus: false};
-            
-            // Ensure ownedTitles exists and includes current title
-            if (!userData.ownedTitles) {
-                userData.ownedTitles = [];
-                if (playerTitle && !userData.ownedTitles.includes(playerTitle)) {
-                    userData.ownedTitles.push(playerTitle);
-                    users[currentUser] = userData;
-                    localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+        async function loadUserStats() {
+            try {
+                const response = await fetch(`/api/user/${currentUser}`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    console.error('Failed to load user stats');
+                    return;
                 }
-            }
 
-            document.getElementById('best-level').textContent = userData.maxLevel;
-            document.getElementById('games-played').textContent = userData.gamesPlayed;
-            document.getElementById('gems-count').textContent = gems;
-            document.getElementById('shop-gems').textContent = gems;
-            
-            // Update title display - check active YouTuber title first
-            const titleElement = document.getElementById('player-title');
-            const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
-            const activeYoutuberTitle = userData.activeYoutuberTitle;
-            
-            if (activeYoutuberTitle && youtuberTitles[activeYoutuberTitle]) {
-                // Show active YouTuber title (highest priority)
-                const youtuberTitle = youtuberTitles[activeYoutuberTitle];
-                titleElement.innerHTML = `🎬 ${youtuberTitle.name} `;
-                titleElement.style.color = '#ff4757';
-                titleElement.style.textShadow = '2px 2px 4px rgba(0,0,0,0.3)';
-            } else if (isPremium && customTitle) {
-                titleElement.innerHTML = `✨ ${customTitle} `;
-                titleElement.style.color = '#e17055';
-                titleElement.style.textShadow = '1px 1px 2px rgba(0,0,0,0.3)';
-            } else if (playerTitle) {
-                const titleText = getTitleText(playerTitle);
-                titleElement.textContent = titleText + ' ';
-                titleElement.style.color = getTitleColor(playerTitle);
-                titleElement.style.textShadow = '1px 1px 2px rgba(0,0,0,0.2)';
-            } else {
-                titleElement.textContent = 'Welcome, ';
-                titleElement.style.color = '#333';
-                titleElement.style.textShadow = 'none';
+                const userData = data.userData;
+                gems = userData.gems || 0;
+                playerTitle = userData.title || '';
+                isPremium = userData.isPremium || false;
+                customTitle = userData.customTitle || '';
+                playerPerks = userData.perks || {doubleDamage: false, extraHealth: false, fastTyping: false, gemBonus: false};
+
+                document.getElementById('best-level').textContent = userData.maxLevel || 0;
+                document.getElementById('games-played').textContent = userData.gamesPlayed || 0;
+                document.getElementById('gems-count').textContent = gems;
+                document.getElementById('shop-gems').textContent = gems;
+                
+                // Get global data for YouTuber titles
+                const globalResponse = await fetch('/api/global-data');
+                const globalData = await globalResponse.json();
+                const youtuberTitles = globalData.youtuberTitles || {};
+                
+                // Update title display - check active YouTuber title first
+                const titleElement = document.getElementById('player-title');
+                const activeYoutuberTitle = userData.activeYoutuberTitle;
+                
+                if (activeYoutuberTitle && youtuberTitles[activeYoutuberTitle]) {
+                    // Show active YouTuber title (highest priority)
+                    const youtuberTitle = youtuberTitles[activeYoutuberTitle];
+                    titleElement.innerHTML = `🎬 ${youtuberTitle.name} `;
+                    titleElement.style.color = '#ff4757';
+                    titleElement.style.textShadow = '2px 2px 4px rgba(0,0,0,0.3)';
+                } else if (isPremium && customTitle) {
+                    titleElement.innerHTML = `✨ ${customTitle} `;
+                    titleElement.style.color = '#e17055';
+                    titleElement.style.textShadow = '1px 1px 2px rgba(0,0,0,0.3)';
+                } else if (playerTitle) {
+                    const titleText = getTitleText(playerTitle);
+                    titleElement.textContent = titleText + ' ';
+                    titleElement.style.color = getTitleColor(playerTitle);
+                    titleElement.style.textShadow = '1px 1px 2px rgba(0,0,0,0.2)';
+                } else {
+                    titleElement.textContent = 'Welcome, ';
+                    titleElement.style.color = '#333';
+                    titleElement.style.textShadow = 'none';
+                }
+                
+                updateShopButtons();
+            } catch (error) {
+                console.error('Failed to load user stats:', error);
             }
-            
-            updateShopButtons();
         }
 
         function updateUserStats(level) {
@@ -584,16 +594,32 @@
             }
         }
 
-        function saveUserData() {
-            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
-            if (users[currentUser]) {
-                users[currentUser].gems = gems;
-                users[currentUser].title = playerTitle;
-                users[currentUser].perks = playerPerks;
-                users[currentUser].isPremium = isPremium;
-                users[currentUser].customTitle = customTitle;
-                localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+        async function saveUserData() {
+            try {
+                const updateData = {
+                    gems: gems,
+                    title: playerTitle,
+                    perks: playerPerks,
+                    isPremium: isPremium,
+                    customTitle: customTitle
+                };
+
+                const response = await fetch(`/api/user/${currentUser}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                const data = await response.json();
+                if (!data.success) {
+                    console.error('Failed to save user data:', data.message);
+                }
+                
                 loadUserStats();
+            } catch (error) {
+                console.error('Failed to save user data:', error);
             }
         }
 
@@ -2182,6 +2208,11 @@ Type "VERIFIED" if all details match exactly:`);
             }, 100);
         }
 
+        function logoutFromBanScreen() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'signup.html';
+        }
+
         function showBanScreen(banData) {
             // Hide all game content
             document.getElementById('game-container').style.display = 'none';
@@ -2241,16 +2272,27 @@ Type "VERIFIED" if all details match exactly:`);
                     <p style="color: #ffeb3b; margin: 10px 0 0 0; font-size: 1.1em;">${reason}</p>
                 </div>
                 <p style="color: #fff; margin-top: 30px; font-size: 0.9em;">Contact an administrator if you believe this is an error</p>
-                <button onclick="location.reload()" style="
-                    background: linear-gradient(45deg, #74b9ff, #0984e3);
-                    color: white;
-                    border: none;
-                    padding: 10px 20px;
-                    border-radius: 25px;
-                    font-size: 1em;
-                    cursor: pointer;
-                    margin-top: 20px;
-                ">🔄 Check Ban Status</button>
+                <div style="margin-top: 20px;">
+                    <button onclick="location.reload()" style="
+                        background: linear-gradient(45deg, #74b9ff, #0984e3);
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 25px;
+                        font-size: 1em;
+                        cursor: pointer;
+                        margin-right: 10px;
+                    ">🔄 Check Ban Status</button>
+                    <button onclick="logoutFromBanScreen()" style="
+                        background: linear-gradient(45deg, #636e72, #2d3436);
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 25px;
+                        font-size: 1em;
+                        cursor: pointer;
+                    ">🚪 Logout</button>
+                </div>
             `;
             
             banScreen.appendChild(banContent);
