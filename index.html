@@ -1165,13 +1165,24 @@ Type "VERIFIED" if all details match exactly:`);
                 // Show the Creator tab
                 creatorTabBtn.style.display = 'inline-block';
                 
+                // Check if user is currently using a YouTuber title
+                const currentlyEquippedYoutuberTitle = userYoutuberTitles.length > 0 ? userYoutuberTitles[0] : null;
+                const isYoutuberTitleActive = currentlyEquippedYoutuberTitle && 
+                    (!playerTitle || playerTitle === '' || !isPremium || !customTitle);
+                
                 // Populate creator titles
                 const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
-                let creatorHTML = '';
+                let creatorHTML = `
+                    <div style="margin-bottom: 20px; text-align: center;">
+                        <button class="btn btn-secondary" onclick="unequipYoutuberTitle()">❌ Remove Creator Title</button>
+                    </div>
+                `;
                 
                 userYoutuberTitles.forEach(titleId => {
                     const titleData = youtuberTitles[titleId];
                     if (titleData) {
+                        const isCurrentlyEquipped = titleId === currentlyEquippedYoutuberTitle && isYoutuberTitleActive;
+                        
                         creatorHTML += `
                             <div class="shop-item" style="background: linear-gradient(145deg, #fff5f5, #ffe8e8); border: 2px solid #ff4757;">
                                 <div class="item-info">
@@ -1180,16 +1191,21 @@ Type "VERIFIED" if all details match exactly:`);
                                     <small style="color: #999;">Created: ${new Date(titleData.createdAt).toLocaleDateString()}</small>
                                 </div>
                                 <div class="item-price">
-                                    <button onclick="disableYoutuberTitle('${titleId}')" class="btn" style="background: linear-gradient(45deg, #ff4757, #ff3838); color: white; padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer; font-weight: bold;">
-                                        ❌ Disable Title
-                                    </button>
+                                    ${isCurrentlyEquipped ? 
+                                        `<button class="btn" style="background: linear-gradient(45deg, #00b894, #00a085); color: white; padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer; font-weight: bold;" disabled>
+                                            ✅ Equipped
+                                        </button>` :
+                                        `<button onclick="equipYoutuberTitle('${titleId}')" class="btn" style="background: linear-gradient(45deg, #74b9ff, #0984e3); color: white; padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer; font-weight: bold;">
+                                            🎬 Equip
+                                        </button>`
+                                    }
                                 </div>
                             </div>
                         `;
                     }
                 });
                 
-                if (creatorHTML === '') {
+                if (userYoutuberTitles.length === 0) {
                     creatorHTML = '<p style="text-align: center; color: #636e72; font-style: italic;">No Content Creator titles available.</p>';
                 }
                 
@@ -1201,38 +1217,57 @@ Type "VERIFIED" if all details match exactly:`);
             }
         }
 
-        function disableYoutuberTitle(titleId) {
-            const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
-            const titleData = youtuberTitles[titleId];
+        function equipYoutuberTitle(titleId) {
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            const userData = users[currentUser] || {};
+            const userYoutuberTitles = userData.youtuberTitles || [];
             
-            if (!titleData) {
-                alert('Title not found!');
+            if (!userYoutuberTitles.includes(titleId)) {
+                alert('You do not own this Content Creator title!');
                 return;
             }
             
-            if (confirm(`⚠️ Are you sure you want to disable your "${titleData.name}" Content Creator title?\n\nThis will remove it from your account permanently. You cannot re-enable it yourself.`)) {
-                const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
-                const userData = users[currentUser] || {};
-                
-                // Remove title from user's YouTuber titles
-                if (userData.youtuberTitles) {
-                    userData.youtuberTitles = userData.youtuberTitles.filter(id => id !== titleId);
-                    users[currentUser] = userData;
-                    localStorage.setItem('typingBattleUsers', JSON.stringify(users));
-                }
-                
-                // Remove user from title's assigned list
-                if (titleData.assignedTo) {
-                    titleData.assignedTo = titleData.assignedTo.filter(username => username !== currentUser);
-                    localStorage.setItem('youtuberTitles', JSON.stringify(youtuberTitles));
-                }
-                
-                // Refresh user stats and creator tab
-                loadUserStats();
-                updateCreatorTab();
-                
-                alert(`❌ Content Creator title "${titleData.name}" has been disabled and removed from your account.`);
+            // Move the selected title to the front of the array (highest priority)
+            userData.youtuberTitles = [titleId, ...userYoutuberTitles.filter(id => id !== titleId)];
+            users[currentUser] = userData;
+            localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+            
+            // Clear regular title and custom title when equipping YouTuber title
+            playerTitle = '';
+            customTitle = '';
+            saveUserData();
+            
+            const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
+            const titleData = youtuberTitles[titleId];
+            
+            updateCreatorTab();
+            alert(`🎬 Content Creator title "${titleData.name}" equipped!`);
+        }
+
+        function unequipYoutuberTitle() {
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            const userData = users[currentUser] || {};
+            const userYoutuberTitles = userData.youtuberTitles || [];
+            
+            if (userYoutuberTitles.length === 0) {
+                alert('No Content Creator title is currently equipped!');
+                return;
             }
+            
+            // Check if a YouTuber title is actually being displayed
+            const isYoutuberTitleActive = userYoutuberTitles.length > 0 && 
+                (!playerTitle || playerTitle === '' || !isPremium || !customTitle);
+            
+            if (!isYoutuberTitleActive) {
+                alert('No Content Creator title is currently active!');
+                return;
+            }
+            
+            // Don't remove from array, just allow other titles to take precedence
+            // User can re-equip by clicking the equip button
+            loadUserStats();
+            updateCreatorTab();
+            alert('❌ Content Creator title unequipped! You can re-equip it anytime.');
         }
 
         // Admin Panel Functions
