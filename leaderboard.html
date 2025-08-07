@@ -1,90 +1,21 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Typing Battle - Leaderboard</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            text-align: center;
-            background-color: #f0f0f0;
-            margin-top: 50px;
-        }
-        .leaderboard-container {
-            width: 80%;
-            max-width: 600px;
-            margin: 0 auto;
-            border: 2px solid #ccc;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .leaderboard-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        .leaderboard-table th,
-        .leaderboard-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        .leaderboard-table th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-        }
-        .rank {
-            text-align: center;
-            font-weight: bold;
-        }
-        .rank-1 { color: #ffd700; }
-        .rank-2 { color: #c0c0c0; }
-        .rank-3 { color: #cd7f32; }
-        .current-user {
-            background-color: #e3f2fd;
-        }
-        .btn {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1em;
-            margin: 10px;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn:hover {
-            background-color: #0056b3;
-        }
-        .btn-secondary {
-            background-color: #6c757d;
-        }
-        .btn-secondary:hover {
-            background-color: #545b62;
-        }
-        .no-data {
-            color: #666;
-            font-style: italic;
-            margin-top: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="leaderboard-container">
-        <h1>🏆 Leaderboard</h1>
-        <p>Top players by highest level reached</p>
-        
+        <h1>🏆 Hall of Warriors 🏆</h1>
+        <p>The greatest warriors who have conquered the most levels</p>
+
         <div id="leaderboard-content"></div>
-        
+
         <div style="margin-top: 20px;">
-            <a href="index.html" class="btn">Back to Game</a>
-            <button class="btn btn-secondary" onclick="logout()">Logout</button>
+            <a href="index.html" class="btn">⚔️ Return to Battle</a>
+            <button class="btn btn-secondary" onclick="logout()">🚪 Leave Arena</button>
         </div>
     </div>
 
@@ -95,7 +26,7 @@
             const content = document.getElementById('leaderboard-content');
 
             if (Object.keys(users).length === 0) {
-                content.innerHTML = '<div class="no-data">No players yet. Be the first to play!</div>';
+                content.innerHTML = '<div class="no-data">🏟️ The arena awaits its first warriors! Be the first to enter battle!</div>';
                 return;
             }
 
@@ -108,10 +39,10 @@
                 <table class="leaderboard-table">
                     <thead>
                         <tr>
-                            <th class="rank">Rank</th>
-                            <th>Player</th>
-                            <th>Max Level</th>
-                            <th>Games Played</th>
+                            <th class="rank">🏅 Rank</th>
+                            <th>⚔️ Warrior</th>
+                            <th>🗲 Max Level</th>
+                            <th>🎯 Battles Fought</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -123,9 +54,14 @@
                 const rankClass = rank <= 3 ? `rank-${rank}` : '';
                 const rowClass = isCurrentUser ? 'current-user' : '';
 
+                let rankDisplay = rank;
+                if (rank === 1) rankDisplay = '🥇';
+                else if (rank === 2) rankDisplay = '🥈';
+                else if (rank === 3) rankDisplay = '🥉';
+
                 tableHTML += `
                     <tr class="${rowClass}">
-                        <td class="rank ${rankClass}">${rank}</td>
+                        <td class="rank ${rankClass}">${rankDisplay}</td>
                         <td>${user.username}${isCurrentUser ? ' (You)' : ''}</td>
                         <td>${user.maxLevel}</td>
                         <td>${user.gamesPlayed}</td>
