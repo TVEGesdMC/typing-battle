@@ -534,6 +534,31 @@ h1 {
     color: #0984e3;
 }
 
+#cheat-indicator {
+    color: #ff6b6b;
+    font-size: 1.2em;
+    font-weight: bold;
+    margin: 10px 0;
+    padding: 10px;
+    background: rgba(255, 107, 107, 0.1);
+    border: 2px solid #ff6b6b;
+    border-radius: 10px;
+    animation: cheatPulse 1s ease-in-out infinite alternate;
+    position: relative;
+    z-index: 2;
+}
+
+@keyframes cheatPulse {
+    0% { 
+        background: rgba(255, 107, 107, 0.1);
+        box-shadow: 0 0 10px rgba(255, 107, 107, 0.3);
+    }
+    100% { 
+        background: rgba(255, 107, 107, 0.2);
+        box-shadow: 0 0 20px rgba(255, 107, 107, 0.6);
+    }
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .header {
