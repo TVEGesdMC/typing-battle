@@ -41,6 +41,7 @@
                         <tr>
                             <th class="rank">🏅 Rank</th>
                             <th>⚔️ Warrior</th>
+                            <th>🏷️ Title</th>
                             <th>🗲 Max Level</th>
                             <th>🎯 Battles Fought</th>
                         </tr>
@@ -59,10 +60,14 @@
                 else if (rank === 2) rankDisplay = '🥈';
                 else if (rank === 3) rankDisplay = '🥉';
 
+                // Get user title
+                const userTitle = getUserTitleDisplay(user.title || '', user.customTitle || '', user.isPremium || false);
+
                 tableHTML += `
                     <tr class="${rowClass}">
                         <td class="rank ${rankClass}">${rankDisplay}</td>
                         <td>${user.username}${isCurrentUser ? ' (You)' : ''}</td>
+                        <td class="title-cell">${userTitle}</td>
                         <td>${user.maxLevel}</td>
                         <td>${user.gamesPlayed}</td>
                     </tr>
@@ -71,6 +76,20 @@
 
             tableHTML += '</tbody></table>';
             content.innerHTML = tableHTML;
+        }
+
+        function getUserTitleDisplay(title, customTitle, isPremium) {
+            if (isPremium && customTitle) {
+                return `<span class="custom-title">✨ ${customTitle}</span>`;
+            }
+            
+            const titles = {
+                'swordmaster': '<span class="title-swordmaster">🗡️ Sword Master</span>',
+                'champion': '<span class="title-champion">🏆 Champion</span>',
+                'legendary': '<span class="title-legendary">👑 Legendary</span>'
+            };
+            
+            return titles[title] || '<span class="no-title">-</span>';
         }
 
         function logout() {
