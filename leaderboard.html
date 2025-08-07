@@ -21,68 +21,77 @@
     </div>
 
     <script>
-        function loadLeaderboard() {
-            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
-            const currentUser = localStorage.getItem('currentUser');
-            const content = document.getElementById('leaderboard-content');
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch('/api/leaderboard');
+                const data = await response.json();
+                const currentUser = localStorage.getItem('currentUser');
+                const content = document.getElementById('leaderboard-content');
 
-            if (Object.keys(users).length === 0) {
-                content.innerHTML = '<div class="no-data">🏟️ The arena awaits its first warriors! Be the first to enter battle!</div>';
-                return;
-            }
+                if (!data.success || data.users.length === 0) {
+                    content.innerHTML = '<div class="no-data">🏟️ The arena awaits its first warriors! Be the first to enter battle!</div>';
+                    return;
+                }
 
-            // Convert users object to array and sort by maxLevel
-            const sortedUsers = Object.entries(users)
-                .map(([username, data]) => ({ username, ...data }))
-                .sort((a, b) => b.maxLevel - a.maxLevel);
+                // Users are already sorted by maxLevel
+                const sortedUsers = data.users;
 
-            let tableHTML = `
-                <table class="leaderboard-table">
-                    <thead>
-                        <tr>
-                            <th class="rank">🏅 Rank</th>
-                            <th>⚔️ Warrior</th>
-                            <th>🏷️ Title</th>
-                            <th>🗲 Max Level</th>
-                            <th>🎯 Battles Fought</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            sortedUsers.forEach((user, index) => {
-                const rank = index + 1;
-                const isCurrentUser = user.username === currentUser;
-                const rankClass = rank <= 3 ? `rank-${rank}` : '';
-                const rowClass = isCurrentUser ? 'current-user' : '';
-
-                let rankDisplay = rank;
-                if (rank === 1) rankDisplay = '🥇';
-                else if (rank === 2) rankDisplay = '🥈';
-                else if (rank === 3) rankDisplay = '🥉';
-
-                // Get user title
-                const userTitle = getUserTitleDisplay(user.title || '', user.customTitle || '', user.isPremium || false, user.youtuberTitles || [], user.activeYoutuberTitle || null);
-
-                tableHTML += `
-                    <tr class="${rowClass}">
-                        <td class="rank ${rankClass}">${rankDisplay}</td>
-                        <td>${user.username}${isCurrentUser ? ' (You)' : ''}</td>
-                        <td class="title-cell">${userTitle}</td>
-                        <td>${user.maxLevel}</td>
-                        <td>${user.gamesPlayed}</td>
-                    </tr>
+                let tableHTML = `
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th class="rank">🏅 Rank</th>
+                                <th>⚔️ Warrior</th>
+                                <th>🏷️ Title</th>
+                                <th>🗲 Max Level</th>
+                                <th>🎯 Battles Fought</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                 `;
-            });
 
-            tableHTML += '</tbody></table>';
-            content.innerHTML = tableHTML;
+                // Get global data for YouTuber titles
+                const globalResponse = await fetch('/api/global-data');
+                const globalData = await globalResponse.json();
+                const youtuberTitles = globalData.youtuberTitles || {};
+
+                sortedUsers.forEach((user, index) => {
+                    const rank = index + 1;
+                    const isCurrentUser = user.username === currentUser;
+                    const rankClass = rank <= 3 ? `rank-${rank}` : '';
+                    const rowClass = isCurrentUser ? 'current-user' : '';
+
+                    let rankDisplay = rank;
+                    if (rank === 1) rankDisplay = '🥇';
+                    else if (rank === 2) rankDisplay = '🥈';
+                    else if (rank === 3) rankDisplay = '🥉';
+
+                    // Get user title
+                    const userTitle = getUserTitleDisplay(user.title || '', user.customTitle || '', user.isPremium || false, user.youtuberTitles || [], user.activeYoutuberTitle || null, youtuberTitles);
+
+                    tableHTML += `
+                        <tr class="${rowClass}">
+                            <td class="rank ${rankClass}">${rankDisplay}</td>
+                            <td>${user.username}${isCurrentUser ? ' (You)' : ''}</td>
+                            <td class="title-cell">${userTitle}</td>
+                            <td>${user.maxLevel}</td>
+                            <td>${user.gamesPlayed}</td>
+                        </tr>
+                    `;
+                });
+
+                tableHTML += '</tbody></table>';
+                content.innerHTML = tableHTML;
+            } catch (error) {
+                console.error('Failed to load leaderboard:', error);
+                const content = document.getElementById('leaderboard-content');
+                content.innerHTML = '<div class="no-data">❌ Failed to load leaderboard. Please try again later.</div>';
+            }
         }
 
-        function getUserTitleDisplay(title, customTitle, isPremium, youtuberTitles = [], activeYoutuberTitle = null) {
+        function getUserTitleDisplay(title, customTitle, isPremium, userYoutuberTitles = [], activeYoutuberTitle = null, youtuberTitlesData = {}) {
             // Active YouTuber title has highest priority
             if (activeYoutuberTitle) {
-                const youtuberTitlesData = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
                 const titleData = youtuberTitlesData[activeYoutuberTitle];
                 if (titleData) {
                     return `<span class="youtuber-title">🎬 ${titleData.name}</span>`;
