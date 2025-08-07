@@ -687,6 +687,222 @@ h1 {
     box-shadow: 0 0 10px rgba(116, 185, 255, 0.3);
 }
 
+/* Admin Panel Styles */
+.admin-btn {
+    background: linear-gradient(45deg, #e74c3c, #c0392b) !important;
+    animation: adminGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes adminGlow {
+    0% { box-shadow: 0 0 10px rgba(231, 76, 60, 0.5); }
+    100% { box-shadow: 0 0 20px rgba(231, 76, 60, 0.8); }
+}
+
+.admin-container {
+    background: linear-gradient(145deg, #2c3e50, #34495e);
+    border: 3px solid #e74c3c;
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 700px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    position: relative;
+    color: white;
+}
+
+.admin-content {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.admin-section {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.admin-section h3 {
+    color: #e74c3c;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.3em;
+}
+
+.admin-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 12px;
+    border: 2px solid #e74c3c;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #2c3e50;
+    font-size: 1em;
+    resize: vertical;
+    margin-bottom: 10px;
+}
+
+.admin-input, .admin-select {
+    padding: 10px 12px;
+    border: 2px solid #e74c3c;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #2c3e50;
+    font-size: 1em;
+    margin: 5px;
+}
+
+.admin-action-btn {
+    background: linear-gradient(45deg, #e74c3c, #c0392b) !important;
+    margin: 5px;
+}
+
+.event-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.admin-status {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 4px solid #e74c3c;
+}
+
+.admin-status p {
+    margin: 8px 0;
+    font-size: 0.9em;
+}
+
+/* Global Announcements */
+.global-announcements {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999;
+    animation: slideDown 0.5s ease-out;
+}
+
+.announcement-content {
+    background: linear-gradient(45deg, #e74c3c, #c0392b);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    min-width: 300px;
+    max-width: 500px;
+}
+
+.announcement-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.announcement-tag {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.announcement-close {
+    cursor: pointer;
+    font-size: 1.5em;
+    line-height: 1;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.announcement-close:hover {
+    opacity: 1;
+}
+
+.announcement-message {
+    font-size: 1.1em;
+    margin-bottom: 5px;
+    line-height: 1.4;
+}
+
+.announcement-author {
+    text-align: right;
+    font-size: 0.9em;
+    opacity: 0.9;
+    font-style: italic;
+}
+
+/* Global Events Banner */
+.global-event-banner {
+    background: linear-gradient(45deg, #fdcb6e, #e17055);
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    font-weight: bold;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    animation: eventPulse 2s ease-in-out infinite alternate;
+    margin-bottom: 20px;
+    border-radius: 10px;
+}
+
+.event-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.event-icon {
+    font-size: 1.5em;
+    animation: bounce 1s ease-in-out infinite;
+}
+
+.event-text {
+    font-size: 1.2em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.event-multiplier {
+    background: rgba(255, 255, 255, 0.3);
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.9em;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes eventPulse {
+    0% { 
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        transform: scale(1);
+    }
+    100% { 
+        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        transform: scale(1.02);
+    }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
 /*Signup page specific styles */
 .auth-container {
     width: 90%;
