@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -466,117 +467,122 @@
         const monsterNameDisplay = document.getElementById("monster-name");
         const cheatIndicator = document.getElementById("cheat-indicator");
 
-        async function checkAuth() {
+        function checkAuth() {
             currentUser = localStorage.getItem('currentUser');
             if (!currentUser) {
                 window.location.href = 'signup.html';
                 return false;
             }
 
-            try {
-                const response = await fetch(`/api/user/${currentUser}`);
-                const data = await response.json();
+            // Check if user is banned
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            const userData = users[currentUser];
+            
+            if (userData && userData.banned) {
+                const banData = userData.banData || {};
+                const banEndTime = banData.endTime;
+                const currentTime = Date.now();
                 
-                if (!data.success) {
-                    localStorage.removeItem('currentUser');
-                    window.location.href = 'signup.html';
+                // Check if ban has expired
+                if (banEndTime && currentTime >= banEndTime) {
+                    // Ban expired, remove ban
+                    userData.banned = false;
+                    userData.banData = {};
+                    users[currentUser] = userData;
+                    localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+                } else {
+                    // Show ban screen
+                    showBanScreen(banData);
                     return false;
                 }
-
-                // Check if user is banned
-                if (data.userData.banned) {
-                    const banData = data.userData.banData || {};
-                    const banEndTime = banData.endTime;
-                    const currentTime = Date.now();
-                    
-                    // Check if ban has expired
-                    if (banEndTime && currentTime >= banEndTime) {
-                        // Ban expired, continue normally
-                        document.getElementById('username').textContent = currentUser;
-                        loadUserStats();
-                    } else {
-                        // Show ban screen
-                        showBanScreen(banData);
-                        return false;
-                    }
-                } else {
-                    document.getElementById('username').textContent = currentUser;
-                    loadUserStats();
-                }
-                
-                // Show admin panel for special user
-                if (currentUser === 'TVEGesdreal') {
-                    document.getElementById('admin-btn').style.display = 'inline-block';
-                }
-                
-                // Check for active global events
-                checkGlobalEvents();
-                
-                return true;
-            } catch (error) {
-                console.error('Auth check failed:', error);
-                localStorage.removeItem('currentUser');
-                window.location.href = 'signup.html';
-                return false;
             }
+
+            document.getElementById('username').textContent = currentUser;
+            loadUserStats();
+            
+            // Show admin panel for special user
+            if (currentUser === 'TVEGesdreal') {
+                document.getElementById('admin-btn').style.display = 'inline-block';
+            }
+            
+            // Check for active global events
+            checkGlobalEvents();
+            
+            return true;
         }
 
-        async function loadUserStats() {
-            try {
-                const response = await fetch(`/api/user/${currentUser}`);
-                const data = await response.json();
-                
-                if (!data.success) {
-                    console.error('Failed to load user stats');
-                    return;
-                }
-
-                const userData = data.userData;
-                gems = userData.gems || 0;
-                playerTitle = userData.title || '';
-                isPremium = userData.isPremium || false;
-                customTitle = userData.customTitle || '';
-                playerPerks = userData.perks || {doubleDamage: false, extraHealth: false, fastTyping: false, gemBonus: false};
-
-                document.getElementById('best-level').textContent = userData.maxLevel || 0;
-                document.getElementById('games-played').textContent = userData.gamesPlayed || 0;
-                document.getElementById('gems-count').textContent = gems;
-                document.getElementById('shop-gems').textContent = gems;
-                
-                // Get global data for YouTuber titles
-                const globalResponse = await fetch('/api/global-data');
-                const globalData = await globalResponse.json();
-                const youtuberTitles = globalData.youtuberTitles || {};
-                
-                // Update title display - check active YouTuber title first
-                const titleElement = document.getElementById('player-title');
-                const activeYoutuberTitle = userData.activeYoutuberTitle;
-                
-                if (activeYoutuberTitle && youtuberTitles[activeYoutuberTitle]) {
-                    // Show active YouTuber title (highest priority)
-                    const youtuberTitle = youtuberTitles[activeYoutuberTitle];
-                    titleElement.innerHTML = `🎬 ${youtuberTitle.name} `;
-                    titleElement.style.color = '#ff4757';
-                    titleElement.style.textShadow = '2px 2px 4px rgba(0,0,0,0.3)';
-                } else if (isPremium && customTitle) {
-                    titleElement.innerHTML = `✨ ${customTitle} `;
-                    titleElement.style.color = '#e17055';
-                    titleElement.style.textShadow = '1px 1px 2px rgba(0,0,0,0.3)';
-                } else if (playerTitle) {
-                    const titleText = getTitleText(playerTitle);
-                    titleElement.textContent = titleText + ' ';
-                    titleElement.style.color = getTitleColor(playerTitle);
-                    titleElement.style.textShadow = '1px 1px 2px rgba(0,0,0,0.2)';
-                } else {
-                    titleElement.textContent = 'Welcome, ';
-                    titleElement.style.color = '#333';
-                    titleElement.style.textShadow = 'none';
-                }
-                
-                updateShopButtons();
-            } catch (error) {
-                console.error('Failed to load user stats:', error);
+        function loadUserStats() {
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            let userData = users[currentUser];
+            
+            if (!userData) {
+                userData = {
+                    maxLevel: 0,
+                    gamesPlayed: 0,
+                    gems: 0,
+                    title: '',
+                    customTitle: '',
+                    isPremium: false,
+                    perks: {doubleDamage: false, extraHealth: false, fastTyping: false, gemBonus: false},
+                    ownedTitles: [],
+                    youtuberTitles: [],
+                    activeYoutuberTitle: null,
+                    createdAt: new Date().toISOString(),
+                    banned: false,
+                    banData: {}
+                };
+                users[currentUser] = userData;
+                localStorage.setItem('typingBattleUsers', JSON.stringify(users));
             }
+            
+            gems = userData.gems || 0;
+            playerTitle = userData.title || '';
+            isPremium = userData.isPremium || false;
+            customTitle = userData.customTitle || '';
+            playerPerks = userData.perks || {doubleDamage: false, extraHealth: false, fastTyping: false, gemBonus: false};
+            
+            // Auto-activate premium for special username
+            if (currentUser === 'TVEGesdreal' && !isPremium) {
+                isPremium = true;
+                userData.isPremium = true;
+                users[currentUser] = userData;
+                localStorage.setItem('typingBattleUsers', JSON.stringify(users));
+            }
+
+            document.getElementById('best-level').textContent = userData.maxLevel || 0;
+            document.getElementById('games-played').textContent = userData.gamesPlayed || 0;
+            document.getElementById('gems-count').textContent = gems;
+            document.getElementById('shop-gems').textContent = gems;
+            
+            // Get YouTuber titles
+            const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
+            
+            // Update title display - check active YouTuber title first
+            const titleElement = document.getElementById('player-title');
+            const activeYoutuberTitle = userData.activeYoutuberTitle;
+            
+            if (activeYoutuberTitle && youtuberTitles[activeYoutuberTitle]) {
+                // Show active YouTuber title (highest priority)
+                const youtuberTitle = youtuberTitles[activeYoutuberTitle];
+                titleElement.innerHTML = `🎬 ${youtuberTitle.name} `;
+                titleElement.style.color = '#ff4757';
+                titleElement.style.textShadow = '2px 2px 4px rgba(0,0,0,0.3)';
+            } else if (isPremium && customTitle) {
+                titleElement.innerHTML = `✨ ${customTitle} `;
+                titleElement.style.color = '#e17055';
+                titleElement.style.textShadow = '1px 1px 2px rgba(0,0,0,0.3)';
+            } else if (playerTitle) {
+                const titleText = getTitleText(playerTitle);
+                titleElement.textContent = titleText + ' ';
+                titleElement.style.color = getTitleColor(playerTitle);
+                titleElement.style.textShadow = '1px 1px 2px rgba(0,0,0,0.2)';
+            } else {
+                titleElement.textContent = 'Welcome, ';
+                titleElement.style.color = '#333';
+                titleElement.style.textShadow = 'none';
+            }
+            
+            updateShopButtons();
         }
 
         function updateUserStats(level) {
@@ -594,32 +600,16 @@
             }
         }
 
-        async function saveUserData() {
-            try {
-                const updateData = {
-                    gems: gems,
-                    title: playerTitle,
-                    perks: playerPerks,
-                    isPremium: isPremium,
-                    customTitle: customTitle
-                };
-
-                const response = await fetch(`/api/user/${currentUser}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(updateData)
-                });
-
-                const data = await response.json();
-                if (!data.success) {
-                    console.error('Failed to save user data:', data.message);
-                }
-                
+        function saveUserData() {
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            if (users[currentUser]) {
+                users[currentUser].gems = gems;
+                users[currentUser].title = playerTitle;
+                users[currentUser].perks = playerPerks;
+                users[currentUser].isPremium = isPremium;
+                users[currentUser].customTitle = customTitle;
+                localStorage.setItem('typingBattleUsers', JSON.stringify(users));
                 loadUserStats();
-            } catch (error) {
-                console.error('Failed to save user data:', error);
             }
         }
 
@@ -969,7 +959,7 @@
             
             const today = new Date().toDateString();
             
-            // Simulate receipt verification (in a real app, this would be server-side)
+            // Simulate receipt verification
             const verificationPrompt = prompt(`Receipt Verification:
             
 Please confirm the following details from your receipt link:
@@ -984,6 +974,7 @@ Type "VERIFIED" if all details match exactly:`);
                 const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
                 if (users[currentUser]) {
                     users[currentUser].premiumActivationDate = today;
+                    users[currentUser].isPremium = true;
                     localStorage.setItem('typingBattleUsers', JSON.stringify(users));
                 }
                 saveUserData();
