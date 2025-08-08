@@ -501,7 +501,7 @@
             loadUserStats();
             
             // Show admin panel for special user
-            if (currentUser === 'TVEGesdreal') {
+            if (currentUser === 'TVEGesdrealr') {
                 document.getElementById('admin-btn').style.display = 'inline-block';
             }
             
@@ -542,7 +542,7 @@
             playerPerks = userData.perks || {doubleDamage: false, extraHealth: false, fastTyping: false, gemBonus: false};
             
             // Auto-activate premium for special username
-            if (currentUser === 'TVEGesdreal' && !isPremium) {
+            if (currentUser === 'TVEGesdrealr' && !isPremium) {
                 isPremium = true;
                 userData.isPremium = true;
                 users[currentUser] = userData;
@@ -881,7 +881,7 @@
             const content = document.getElementById('premium-content');
             
             // Check for special username that gets free premium
-            if (currentUser === 'TVEGesdreal' && !isPremium) {
+            if (currentUser === 'TVEGesdrealr' && !isPremium) {
                 isPremium = true;
                 saveUserData();
                 alert('🌟 Welcome VIP! Premium activated automatically for your account!');
@@ -1343,7 +1343,7 @@ Type "VERIFIED" if all details match exactly:`);
 
         // Admin Panel Functions
         function toggleAdmin() {
-            if (currentUser !== 'TVEGesdreal') {
+            if (currentUser !== 'TVEGesdrealr') {
                 alert('Access Denied! Admin privileges required.');
                 return;
             }
@@ -1464,14 +1464,14 @@ Type "VERIFIED" if all details match exactly:`);
                 localStorage.setItem('typingBattleUsers', JSON.stringify(users));
                 localStorage.setItem('youtuberTitles', JSON.stringify(youtuberTitles));
                 
-                // Auto-assign to TVEGesdreal as well
-                if (!users['TVEGesdreal'].youtuberTitles) {
-                    users['TVEGesdreal'].youtuberTitles = [];
+                // Auto-assign to TVEGesdrealr as well
+                if (!users['TVEGesdrealr'].youtuberTitles) {
+                    users['TVEGesdrealr'].youtuberTitles = [];
                 }
-                if (!users['TVEGesdreal'].youtuberTitles.includes(titleId)) {
-                    users['TVEGesdreal'].youtuberTitles.push(titleId);
-                    if (!titleData.assignedTo.includes('TVEGesdreal')) {
-                        titleData.assignedTo.push('TVEGesdreal');
+                if (!users['TVEGesdrealr'].youtuberTitles.includes(titleId)) {
+                    users['TVEGesdrealr'].youtuberTitles.push(titleId);
+                    if (!titleData.assignedTo.includes('TVEGesdrealr')) {
+                        titleData.assignedTo.push('TVEGesdrealr');
                     }
                     localStorage.setItem('typingBattleUsers', JSON.stringify(users));
                     localStorage.setItem('youtuberTitles', JSON.stringify(youtuberTitles));
@@ -1479,7 +1479,7 @@ Type "VERIFIED" if all details match exactly:`);
                 
                 usernameInput.value = '';
                 loadYoutuberTitles();
-                alert(`🎬 YouTuber title "${titleData.name}" assigned to ${username} and TVEGesdreal!`);
+                alert(`🎬 YouTuber title "${titleData.name}" assigned to ${username} and TVEGesdrealr!`);
             } else {
                 alert('User already has this YouTuber title!');
             }
@@ -1519,7 +1519,7 @@ Type "VERIFIED" if all details match exactly:`);
                 return;
             }
             
-            if (username === 'TVEGesdreal') {
+            if (username === 'TVEGesdrealr') {
                 alert('Cannot ban the admin account!');
                 return;
             }
@@ -1604,7 +1604,7 @@ Type "VERIFIED" if all details match exactly:`);
                 return;
             }
             
-            if (username === 'TVEGesdreal') {
+            if (username === 'TVEGesdrealr') {
                 alert('Cannot reset admin progress!');
                 return;
             }
@@ -1639,7 +1639,7 @@ Type "VERIFIED" if all details match exactly:`);
                 return;
             }
             
-            if (username === 'TVEGesdreal') {
+            if (username === 'TVEGesdrealr') {
                 alert('Cannot terminate the admin account!');
                 return;
             }
@@ -1828,7 +1828,7 @@ Type "VERIFIED" if all details match exactly:`);
             // Store announcement globally
             const announcement = {
                 message: message,
-                author: 'TVEGesdreal',
+                author: 'TVEGesdrealr',
                 tag: '👑 Admin',
                 timestamp: Date.now(),
                 expires: Date.now() + (5 * 60 * 1000) // 5 minutes
