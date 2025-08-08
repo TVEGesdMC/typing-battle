@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,104 +22,99 @@
     </div>
 
     <script>
-        async function loadLeaderboard() {
-            try {
-                const response = await fetch('/api/leaderboard');
-                const data = await response.json();
-                const currentUser = localStorage.getItem('currentUser');
-                const content = document.getElementById('leaderboard-content');
+        function loadLeaderboard() {
+            const users = JSON.parse(localStorage.getItem('typingBattleUsers') || '{}');
+            const currentUser = localStorage.getItem('currentUser');
+            const content = document.getElementById('leaderboard-content');
 
-                if (!data.success || data.users.length === 0) {
-                    content.innerHTML = '<div class="no-data">🏟️ The arena awaits its first warriors! Be the first to enter battle!</div>';
-                    return;
+            // Convert users object to array and sort by maxLevel
+            const usersArray = Object.values(users).sort((a, b) => (b.maxLevel || 0) - (a.maxLevel || 0));
+
+            if (usersArray.length === 0) {
+                content.innerHTML = '<div class="no-data">No warriors have entered the arena yet!</div>';
+                return;
+            }
+
+            let tableHTML = `
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Warrior</th>
+                            <th>Max Level</th>
+                            <th>Games Played</th>
+                            <th>Title</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            const youtuberTitles = JSON.parse(localStorage.getItem('youtuberTitles') || '{}');
+
+            usersArray.forEach((user, index) => {
+                const rank = index + 1;
+                const isCurrentUser = user.username === currentUser;
+                const rankClass = rank <= 3 ? `rank-${rank}` : '';
+                const rowClass = isCurrentUser ? 'current-user' : '';
+
+                // Determine which title to show (priority: YouTuber > Premium Custom > Regular)
+                let titleDisplay = '';
+                let titleClass = '';
+                
+                if (user.activeYoutuberTitle && youtuberTitles[user.activeYoutuberTitle]) {
+                    const youtuberTitle = youtuberTitles[user.activeYoutuberTitle];
+                    titleDisplay = `🎬 ${youtuberTitle.name}`;
+                    titleClass = 'youtuber-title';
+                } else if (user.isPremium && user.customTitle) {
+                    titleDisplay = `✨ ${user.customTitle}`;
+                    titleClass = 'custom-title';
+                } else if (user.title) {
+                    titleDisplay = getTitleText(user.title);
+                    titleClass = `title-${user.title}`;
+                } else {
+                    titleDisplay = 'No Title';
+                    titleClass = 'no-title';
                 }
 
-                // Users are already sorted by maxLevel
-                const sortedUsers = data.users;
-
-                let tableHTML = `
-                    <table class="leaderboard-table">
-                        <thead>
-                            <tr>
-                                <th class="rank">🏅 Rank</th>
-                                <th>⚔️ Warrior</th>
-                                <th>🏷️ Title</th>
-                                <th>🗲 Max Level</th>
-                                <th>🎯 Battles Fought</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                tableHTML += `
+                    <tr class="${rowClass}">
+                        <td class="rank ${rankClass}">${getRankEmoji(rank)}${rank}</td>
+                        <td><strong>${user.username}</strong></td>
+                        <td>${user.maxLevel || 0}</td>
+                        <td>${user.gamesPlayed || 0}</td>
+                        <td class="title-cell ${titleClass}">${titleDisplay}</td>
+                    </tr>
                 `;
+            });
 
-                // Get global data for YouTuber titles
-                const globalResponse = await fetch('/api/global-data');
-                const globalData = await globalResponse.json();
-                const youtuberTitles = globalData.youtuberTitles || {};
-
-                sortedUsers.forEach((user, index) => {
-                    const rank = index + 1;
-                    const isCurrentUser = user.username === currentUser;
-                    const rankClass = rank <= 3 ? `rank-${rank}` : '';
-                    const rowClass = isCurrentUser ? 'current-user' : '';
-
-                    let rankDisplay = rank;
-                    if (rank === 1) rankDisplay = '🥇';
-                    else if (rank === 2) rankDisplay = '🥈';
-                    else if (rank === 3) rankDisplay = '🥉';
-
-                    // Get user title
-                    const userTitle = getUserTitleDisplay(user.title || '', user.customTitle || '', user.isPremium || false, user.youtuberTitles || [], user.activeYoutuberTitle || null, youtuberTitles);
-
-                    tableHTML += `
-                        <tr class="${rowClass}">
-                            <td class="rank ${rankClass}">${rankDisplay}</td>
-                            <td>${user.username}${isCurrentUser ? ' (You)' : ''}</td>
-                            <td class="title-cell">${userTitle}</td>
-                            <td>${user.maxLevel}</td>
-                            <td>${user.gamesPlayed}</td>
-                        </tr>
-                    `;
-                });
-
-                tableHTML += '</tbody></table>';
-                content.innerHTML = tableHTML;
-            } catch (error) {
-                console.error('Failed to load leaderboard:', error);
-                const content = document.getElementById('leaderboard-content');
-                content.innerHTML = '<div class="no-data">❌ Failed to load leaderboard. Please try again later.</div>';
-            }
+            tableHTML += '</tbody></table>';
+            content.innerHTML = tableHTML;
         }
 
-        function getUserTitleDisplay(title, customTitle, isPremium, userYoutuberTitles = [], activeYoutuberTitle = null, youtuberTitlesData = {}) {
-            // Active YouTuber title has highest priority
-            if (activeYoutuberTitle) {
-                const titleData = youtuberTitlesData[activeYoutuberTitle];
-                if (titleData) {
-                    return `<span class="youtuber-title">🎬 ${titleData.name}</span>`;
-                }
-            }
-            
-            if (isPremium && customTitle) {
-                return `<span class="custom-title">✨ ${customTitle}</span>`;
-            }
-            
+        function getRankEmoji(rank) {
+            if (rank === 1) return '🥇 ';
+            if (rank === 2) return '🥈 ';
+            if (rank === 3) return '🥉 ';
+            return '';
+        }
+
+        function getTitleText(title) {
             const titles = {
-                'swordmaster': '<span class="title-swordmaster">🗡️ Sword Master</span>',
-                'champion': '<span class="title-champion">🏆 Champion</span>',
-                'legendary': '<span class="title-legendary">👑 Legendary</span>',
-                'pyromaniac': '<span class="title-pyromaniac">🔥 Pyromaniac</span>',
-                'lightning': '<span class="title-lightning">⚡ Lightning Fingers</span>',
-                'starborn': '<span class="title-starborn">🌟 Starborn</span>',
-                'realitybender': '<span class="title-realitybender">🌈 Reality Bender</span>',
-                'deathstypist': '<span class="title-deathstypist">💀 Death\'s Typist</span>',
-                'quantum': '<span class="title-quantum">🚀 Quantum Warrior</span>',
-                'universedestroyer': '<span class="title-universedestroyer">🌌 Universe Destroyer</span>',
-                'allseeing': '<span class="title-allseeing">👁️ All-Seeing Typer</span>',
-                'wordweaver': '<span class="title-wordweaver">🔮 Mystic Wordweaver</span>',
-                'godslayer': '<span class="title-godslayer">⚡ Godslayer Typist</span>'
+                'swordmaster': '🗡️ Sword Master',
+                'champion': '🏆 Champion',
+                'legendary': '👑 Legendary',
+                'pyromaniac': '🔥 Pyromaniac',
+                'lightning': '⚡ Lightning Fingers',
+                'starborn': '🌟 Starborn',
+                'realitybender': '🌈 Reality Bender',
+                'deathstypist': '💀 Death\'s Typist',
+                'quantum': '🚀 Quantum Warrior',
+                'universedestroyer': '🌌 Universe Destroyer',
+                'allseeing': '👁️ All-Seeing Typer',
+                'wordweaver': '🔮 Mystic Wordweaver',
+                'godslayer': '⚡ Godslayer Typist'
             };
-            
-            return titles[title] || '<span class="no-title">-</span>';
+            return titles[title] || title;
         }
 
         function logout() {
@@ -126,12 +122,12 @@
             window.location.href = 'signup.html';
         }
 
-        // Check if user is logged in
+        // Check authentication
         if (!localStorage.getItem('currentUser')) {
             window.location.href = 'signup.html';
+        } else {
+            loadLeaderboard();
         }
-
-        loadLeaderboard();
     </script>
 </body>
 </html>
